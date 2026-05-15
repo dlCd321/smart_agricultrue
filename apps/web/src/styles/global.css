@@ -17,11 +17,22 @@
   --red: #e01818;
   --shadow: 0 20px 50px rgba(50, 65, 91, 0.12);
   --shadow-soft: 0 10px 28px rgba(50, 65, 91, 0.1);
+  --font-sans:
+    "Alibaba PuHuiTi", "Alibaba PuHuiTi 2.0", "阿里巴巴普惠体", Inter,
+    "SF Pro Text", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-display:
+    "Alibaba PuHuiTi", "Alibaba PuHuiTi 2.0", "阿里巴巴普惠体", Inter,
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-numeric:
+    "DIN Alternate", "DIN Condensed", Inter, "SF Pro Text", ui-sans-serif,
+    system-ui, sans-serif;
+  --side-panel-top: 0px;
+  --side-panel-bottom: 12px;
   color: var(--text);
   background: var(--canvas);
-  font-family:
-    Inter, "SF Pro Text", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -149,15 +160,16 @@ a {
 .brand-lockup strong {
   font-size: 24px;
   line-height: 1;
-  font-family: Georgia, "Songti SC", "SimSun", serif;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 850;
 }
 
 .brand-lockup small {
   color: #111827;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-numeric);
   font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .title-lockup {
@@ -173,9 +185,9 @@ a {
   z-index: 2;
   margin: 0;
   color: #050607;
-  font-family: "Songti SC", "SimSun", "Noto Serif CJK SC", serif;
+  font-family: var(--font-display);
   font-size: 38px;
-  font-weight: 900;
+  font-weight: 850;
   line-height: 1;
   text-align: center;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -376,12 +388,12 @@ a {
 
 .side-panel {
   position: absolute;
-  top: 0;
+  top: var(--side-panel-top);
   z-index: 6;
   display: grid;
   gap: 8px;
   width: 320px;
-  height: calc(100% - 12px);
+  height: calc(100% - var(--side-panel-top) - var(--side-panel-bottom));
   max-height: 730px;
   transition:
     opacity 220ms ease,
@@ -391,7 +403,7 @@ a {
 
 .side-panel--left {
   left: 0;
-  grid-template-rows: 1.22fr 0.58fr 0.95fr;
+  grid-template-rows: minmax(246px, 1.12fr) minmax(136px, 0.58fr) minmax(220px, 1fr);
 }
 
 .side-panel--right {
@@ -497,7 +509,7 @@ a {
 }
 
 .chart-label {
-  margin: 7px 18px 0;
+  margin: 10px 18px 0;
   color: #596b84;
   font-size: 14px;
   font-weight: 650;
@@ -506,7 +518,7 @@ a {
 .trend-chart {
   position: relative;
   height: clamp(112px, 15.6vh, 155px);
-  margin: 6px 17px 0 13px;
+  margin: 8px 18px 0 14px;
   padding-left: 25px;
 }
 
@@ -562,7 +574,7 @@ a {
   grid-template-columns: 1fr 72px;
   align-items: start;
   gap: 4px;
-  padding: 0 18px 14px;
+  padding: 2px 18px 16px;
 }
 
 .x-axis-labels {
@@ -612,14 +624,16 @@ a {
 }
 
 .rainfall-card {
-  padding-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 16px;
 }
 
 .rainfall-value {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin: 20px 26px 4px;
+  margin: 18px 26px 6px;
 }
 
 .rainfall-value strong {
@@ -637,7 +651,7 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 12px 28px 0;
+  margin: auto 28px 0;
   color: #202938;
   font-size: 17px;
   font-weight: 550;
@@ -657,7 +671,7 @@ a {
 .alert-list {
   display: grid;
   gap: 10px;
-  padding: 14px 16px 10px;
+  padding: 16px 16px 12px;
 }
 
 .alert-row {
@@ -1137,7 +1151,7 @@ a {
   }
 
   .side-panel--left {
-    grid-template-rows: 1.22fr 0.58fr 0.95fr;
+    grid-template-rows: minmax(232px, 1.12fr) minmax(128px, 0.58fr) minmax(208px, 1fr);
   }
 
   .side-panel--right {
@@ -1192,8 +1206,8 @@ a {
     min-height: 38px;
   }
 
-  .side-panel {
-    height: calc(100% - 2px);
+  :root {
+    --side-panel-bottom: 2px;
   }
 
   .side-panel--right {
@@ -1217,16 +1231,17 @@ a {
   }
 
   .chart-label {
-    margin-top: 5px;
+    margin-top: 8px;
   }
 
   .trend-chart {
     height: clamp(100px, 15vh, 122px);
-    margin-top: 2px;
+    margin-top: 5px;
   }
 
   .trend-footer {
-    padding-bottom: 8px;
+    padding-top: 1px;
+    padding-bottom: 10px;
   }
 
   .trend-footer > strong {
@@ -1239,7 +1254,7 @@ a {
   }
 
   .rainfall-value {
-    margin-top: 14px;
+    margin-top: 15px;
   }
 
   .rainfall-value strong {
@@ -1248,7 +1263,7 @@ a {
 
   .alert-list {
     gap: 7px;
-    padding-top: 10px;
+    padding-top: 12px;
   }
 
   .more-alerts {
@@ -1331,8 +1346,9 @@ a {
 }
 
 @media (min-height: 821px) and (min-width: 981px) {
-  .side-panel--left {
-    top: -26px;
+  :root {
+    --side-panel-top: -18px;
+    --side-panel-bottom: 18px;
   }
 }
 
