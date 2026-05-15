@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>智慧农业灌溉平台 - 主页面重设计</title>
+    <style>
+      :root {
+        --blue: #0066cc;
+        --blue-dark: #004f9f;
+        --ink: #1d1d1f;
+        --muted: #6e6e73;
+        --soft: #f5f5f7;
+        --canvas: #ffffff;
+        --hairline: #e0e0e0;
+        --green: #1f8f4d;
+        --yellow: #c98b10;
+        --orange: #d65f1e;
+        --red: #d72d28;
+        --field-1: #d9f0dc;
+        --field-2: #bfe2c4;
+        --field-3: #94c99f;
+        --field-4: #6daa7c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 1180px;
+        min-height: 760px;
+        overflow: hidden;
+        color: var(--ink);
+        background: var(--soft);
+        font-family: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .screen {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .global-nav {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        background: #000;
+        color: #fff;
+        font-size: 12px;
+      }
+
+      .brand,
+      .nav-links,
+      .nav-status,
+      .subnav-inner,
+      .field-title,
+      .metric-row,
+      .legend,
+      .status-strip,
+      .action-row,
+      .module-bar {
+        display: flex;
+        align-items: center;
+      }
+
+      .brand {
+        gap: 10px;
+        font-weight: 600;
+      }
+
+      .mark {
+        width: 24px;
+        height: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+      }
+
+      .nav-links {
+        gap: 28px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .nav-status {
+        gap: 16px;
+      }
+
+      .user-dot {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #f5f5f7;
+        color: #1d1d1f;
+        display: grid;
+        place-items: center;
+        font-weight: 600;
+      }
+
+      .subnav {
+        height: 52px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        background: rgba(245, 245, 247, 0.88);
+        backdrop-filter: blur(18px);
+      }
+
+      .subnav-inner {
+        height: 100%;
+        justify-content: space-between;
+        padding: 0 28px;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 21px;
+        line-height: 1.2;
+        font-weight: 600;
+      }
+
+      .subnav-meta {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .pill {
+        height: 34px;
+        border: 0;
+        border-radius: 999px;
+        padding: 0 18px;
+        background: var(--blue);
+        color: #fff;
+        cursor: default;
+      }
+
+      .ghost-pill {
+        height: 34px;
+        border: 1px solid var(--blue);
+        border-radius: 999px;
+        padding: 0 16px;
+        background: #fff;
+        color: var(--blue);
+      }
+
+      .dashboard {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 320px minmax(580px, 1fr) 348px;
+        gap: 16px;
+        padding: 16px 20px 20px;
+      }
+
+      .stack {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: 1.05fr 0.95fr;
+        gap: 16px;
+      }
+
+      .right-stack {
+        grid-template-rows: 1fr 1fr 1.05fr;
+      }
+
+      .panel {
+        min-height: 0;
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        background: var(--canvas);
+        overflow: hidden;
+      }
+
+      .panel-pad {
+        padding: 18px;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .panel-title {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.24;
+        font-weight: 600;
+      }
+
+      .panel-kicker,
+      .fine {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .segmented {
+        display: inline-grid;
+        grid-auto-flow: column;
+        gap: 2px;
+        padding: 2px;
+        border-radius: 999px;
+        background: #f0f0f2;
+      }
+
+      .segmented span {
+        min-width: 58px;
+        border-radius: 999px;
+        padding: 7px 11px;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .segmented .active {
+        color: var(--ink);
+        background: #fff;
+      }
+
+      .metric-row {
+        justify-content: space-between;
+        gap: 12px;
+        margin: 12px 0 16px;
+      }
+
+      .metric {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .metric strong {
+        display: block;
+        font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
+        font-size: 26px;
+        line-height: 1.05;
+        font-weight: 600;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .chart {
+        width: 100%;
+        height: 118px;
+        margin-top: 8px;
+      }
+
+      .bar-chart {
+        height: 104px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        align-items: end;
+        padding: 12px 2px 0;
+      }
+
+      .bar {
+        position: relative;
+        min-width: 0;
+        border-radius: 5px 5px 0 0;
+        background: var(--blue);
+      }
+
+      .bar span {
+        position: absolute;
+        left: 50%;
+        bottom: -22px;
+        transform: translateX(-50%);
+        color: var(--muted);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      .alert-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .alert-item {
+        display: grid;
+        grid-template-columns: 8px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .risk {
+        width: 8px;
+        height: 42px;
+        border-radius: 999px;
+      }
+
+      .risk.danger {
+        background: var(--red);
+      }
+
+      .risk.warning {
+        background: var(--orange);
+      }
+
+      .risk.notice {
+        background: var(--yellow);
+      }
+
+      .alert-name {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .alert-desc {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .alert-value {
+        font-weight: 600;
+        color: var(--red);
+      }
+
+      .map-panel {
+        position: relative;
+        display: grid;
+        grid-template-rows: 1fr 74px;
+      }
+
+      .field-stage {
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+        background: #ecf3ec;
+      }
+
+      .field-stage::before {
+        content: "";
+        position: absolute;
+        inset: -8% -4%;
+        background:
+          linear-gradient(34deg, transparent 0 23%, rgba(255, 255, 255, 0.54) 23% 24%, transparent 24% 100%),
+          linear-gradient(122deg, transparent 0 34%, rgba(255, 255, 255, 0.45) 34% 35%, transparent 35% 100%),
+          repeating-linear-gradient(18deg, var(--field-1) 0 72px, var(--field-2) 72px 144px, var(--field-3) 144px 216px, var(--field-4) 216px 288px);
+        opacity: 0.94;
+      }
+
+      .canal {
+        position: absolute;
+        background: rgba(0, 102, 204, 0.18);
+        border: 1px solid rgba(0, 102, 204, 0.28);
+      }
+
+      .canal.one {
+        left: 7%;
+        top: 18%;
+        width: 86%;
+        height: 22px;
+        transform: rotate(-16deg);
+      }
+
+      .canal.two {
+        left: 34%;
+        top: 4%;
+        width: 22px;
+        height: 82%;
+        transform: rotate(28deg);
+      }
+
+      .field-title {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        gap: 10px;
+        height: 42px;
+        padding: 0 18px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(18px);
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      .field-tools {
+        position: absolute;
+        top: 84px;
+        left: 20px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .tool-button {
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.78);
+        backdrop-filter: blur(14px);
+        color: var(--blue);
+        display: grid;
+        place-items: center;
+      }
+
+      .field-board {
+        position: absolute;
+        left: 50%;
+        top: 54%;
+        width: min(760px, 78%);
+        aspect-ratio: 1.42;
+        transform: translate(-50%, -50%);
+      }
+
+      .plots {
+        position: absolute;
+        inset: 4% 2%;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 10px;
+        transform: perspective(900px) rotateX(54deg) rotateZ(-35deg);
+        transform-origin: 50% 50%;
+      }
+
+      .plot {
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.82);
+        border-radius: 6px;
+        background: hsl(var(--hue), 68%, var(--light));
+        color: rgba(255, 255, 255, 0.96);
+        overflow: visible;
+      }
+
+      .plot::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .plot::after {
+        content: "";
+        position: absolute;
+        left: 10%;
+        right: 10%;
+        bottom: -16px;
+        height: 16px;
+        border-radius: 0 0 6px 6px;
+        background: rgba(0, 0, 0, 0.18);
+        transform: skewX(-28deg);
+        transform-origin: top;
+      }
+
+      .plot-label {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) rotateZ(35deg) rotateX(-54deg);
+        font-size: 18px;
+        font-weight: 600;
+        text-align: center;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+      }
+
+      .plot-note {
+        position: absolute;
+        left: 50%;
+        top: -28px;
+        transform: translateX(-50%) rotateZ(35deg) rotateX(-54deg);
+        min-width: 74px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: rgba(29, 29, 31, 0.78);
+        color: #fff;
+        font-size: 11px;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .focus-card {
+        position: absolute;
+        right: 20px;
+        bottom: 18px;
+        width: 274px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.86);
+        backdrop-filter: blur(18px);
+        padding: 16px;
+      }
+
+      .focus-card h2 {
+        margin: 0 0 12px;
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      .yield-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .yield-metric strong {
+        display: block;
+        color: var(--blue);
+        font-family: "SF Pro Display", system-ui, sans-serif;
+        font-size: 28px;
+        line-height: 1;
+        font-weight: 600;
+      }
+
+      .yield-metric span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .bottom-status {
+        border-top: 1px solid var(--hairline);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(18px);
+        padding: 12px 16px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .legend {
+        gap: 10px;
+      }
+
+      .legend-label {
+        font-weight: 600;
+        font-size: 13px;
+      }
+
+      .scale {
+        width: min(450px, 42vw);
+        height: 12px;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .scale i:nth-child(1) {
+        background: #d72d28;
+      }
+
+      .scale i:nth-child(2) {
+        background: #ee7d38;
+      }
+
+      .scale i:nth-child(3) {
+        background: #f1c27d;
+      }
+
+      .scale i:nth-child(4) {
+        background: #b8dfc3;
+      }
+
+      .scale i:nth-child(5) {
+        background: #86d0cc;
+      }
+
+      .scale i:nth-child(6) {
+        background: #4aa8e8;
+      }
+
+      .scale i:nth-child(7) {
+        background: #1d6fe8;
+      }
+
+      .scale-caption {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 6px;
+      }
+
+      .status-strip {
+        gap: 14px;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .status-strip strong {
+        color: var(--ink);
+      }
+
+      .decision-card {
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        padding: 14px;
+        background: #fff;
+      }
+
+      .decision-card strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      .plan-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .plan-metric {
+        padding: 12px;
+        border-radius: 8px;
+        background: #f5f5f7;
+      }
+
+      .plan-metric b {
+        display: block;
+        font-size: 22px;
+        line-height: 1.1;
+      }
+
+      .action-row {
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .progress-ring {
+        width: 112px;
+        height: 112px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: conic-gradient(var(--blue) 0 72%, #ededf0 72% 100%);
+      }
+
+      .progress-inner {
+        width: 84px;
+        height: 84px;
+        border-radius: 50%;
+        background: #fff;
+        display: grid;
+        place-items: center;
+        text-align: center;
+      }
+
+      .progress-inner strong {
+        display: block;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .progress-inner span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .irrigation-body {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .control-list {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .control-list b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .icon-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .circle-action {
+        width: 38px;
+        height: 38px;
+        border: 1px solid var(--hairline);
+        border-radius: 50%;
+        background: #fff;
+        color: var(--blue);
+      }
+
+      .prescription-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+        aspect-ratio: 1.35;
+        margin-top: 12px;
+      }
+
+      .zone {
+        border-radius: 5px;
+        background: var(--zone);
+        border: 1px solid rgba(255, 255, 255, 0.78);
+      }
+
+      .module-bar {
+        position: absolute;
+        left: 50%;
+        bottom: 108px;
+        transform: translateX(-50%);
+        gap: 8px;
+        padding: 6px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        backdrop-filter: blur(18px);
+      }
+
+      .module-bar button {
+        height: 34px;
+        border: 0;
+        border-radius: 999px;
+        padding: 0 14px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .module-bar .selected {
+        background: var(--blue);
+        color: #fff;
+      }
+
+      @media (max-width: 1320px) {
+        body {
+          overflow: auto;
+        }
+
+        .screen {
+          min-height: 900px;
+        }
+
+        .dashboard {
+          grid-template-columns: 280px minmax(540px, 1fr) 304px;
+          padding: 14px;
+        }
+
+        .nav-links {
+          gap: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="screen">
+      <nav class="global-nav" aria-label="全局导航">
+        <div class="brand">
+          <span class="mark">川</span>
+          <span>四川大学</span>
+        </div>
+        <div class="nav-links" aria-label="功能导航">
+          <span>主控台</span>
+          <span>水分预测</span>
+          <span>缺水预警</span>
+          <span>灌溉决策</span>
+          <span>产量品质</span>
+        </div>
+        <div class="nav-status">
+          <span>26°C · 晴</span>
+          <span>10:00:09</span>
+          <span class="user-dot">A</span>
+        </div>
+      </nav>
+
+      <section class="subnav" aria-label="页面状态">
+        <div class="subnav-inner">
+          <div>
+            <h1>智慧农业灌溉平台</h1>
+            <div class="subnav-meta">位山示范基地 A 区 · 数字孪生主页面</div>
+          </div>
+          <div class="nav-status">
+            <button class="ghost-pill">同步天气</button>
+            <button class="pill">生成灌溉处方</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard" aria-label="主页面">
+        <aside class="stack">
+          <section class="panel panel-pad" data-endpoint="GET /dashboard/expanded">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">实时墒情</p>
+                <span class="panel-kicker">18 个田块 · 采样深度 20cm</span>
+              </div>
+              <div class="segmented" aria-label="图表切换">
+                <span class="active">土壤</span>
+                <span>降雨</span>
+              </div>
+            </div>
+
+            <div class="metric-row">
+              <div class="metric">
+                <strong>42.5%</strong>
+                <span>平均含水率</span>
+              </div>
+              <div class="metric">
+                <strong>22.3°C</strong>
+                <span>土壤温度</span>
+              </div>
+            </div>
+
+            <svg class="chart" viewBox="0 0 286 118" role="img" aria-label="全区土壤水分趋势">
+              <path d="M0 104H286" stroke="#e0e0e0" />
+              <path d="M0 76H286" stroke="#e0e0e0" />
+              <path d="M0 48H286" stroke="#e0e0e0" />
+              <path d="M0 20H286" stroke="#e0e0e0" />
+              <path d="M6 79 C36 88 50 68 74 67 C104 65 109 33 138 36 C165 38 170 29 194 32 C226 35 237 26 276 30" fill="none" stroke="#0066cc" stroke-width="4" stroke-linecap="round" />
+              <path d="M6 79 C36 88 50 68 74 67 C104 65 109 33 138 36 C165 38 170 29 194 32 C226 35 237 26 276 30 L276 104 L6 104 Z" fill="rgba(0,102,204,0.10)" />
+              <g fill="#fff" stroke="#0066cc" stroke-width="3">
+                <circle cx="6" cy="79" r="4" />
+                <circle cx="74" cy="67" r="4" />
+                <circle cx="138" cy="36" r="4" />
+                <circle cx="194" cy="32" r="4" />
+                <circle cx="276" cy="30" r="4" />
+              </g>
+            </svg>
+
+            <div class="bar-chart" aria-label="降雨预测">
+              <div class="bar" style="height: 24%"><span>今日</span></div>
+              <div class="bar" style="height: 46%"><span>明日</span></div>
+              <div class="bar" style="height: 78%"><span>周六</span></div>
+              <div class="bar" style="height: 58%"><span>周日</span></div>
+              <div class="bar" style="height: 18%"><span>周一</span></div>
+            </div>
+          </section>
+
+          <section class="panel panel-pad" data-endpoint="GET /alerts">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">关键预警</p>
+                <span class="panel-kicker">按缺水风险排序</span>
+              </div>
+              <button class="ghost-pill">全部</button>
+            </div>
+            <div class="alert-list">
+              <article class="alert-item">
+                <i class="risk danger"></i>
+                <div>
+                  <div class="alert-name">Block 08 · 严重缺水</div>
+                  <div class="alert-desc">连续干旱 48h，建议立即灌溉</div>
+                </div>
+                <div class="alert-value">18.2%</div>
+              </article>
+              <article class="alert-item">
+                <i class="risk warning"></i>
+                <div>
+                  <div class="alert-name">阀门 V3 · 流量异常</div>
+                  <div class="alert-desc">传感器回传低于处方流速</div>
+                </div>
+                <div class="alert-value">0.31</div>
+              </article>
+              <article class="alert-item">
+                <i class="risk warning"></i>
+                <div>
+                  <div class="alert-name">Block 15 · 中度缺水</div>
+                  <div class="alert-desc">预计 20 分钟后进入危险阈值</div>
+                </div>
+                <div class="alert-value">23.4%</div>
+              </article>
+              <article class="alert-item">
+                <i class="risk notice"></i>
+                <div>
+                  <div class="alert-name">DEV003 · 数据补全</div>
+                  <div class="alert-desc">传感器离线，使用历史数据估算</div>
+                </div>
+                <div class="alert-value">运行中</div>
+              </article>
+            </div>
+          </section>
+        </aside>
+
+        <section class="panel map-panel">
+          <div class="field-stage" data-endpoint="GET /map/layers/moisture">
+            <div class="canal one"></div>
+            <div class="canal two"></div>
+
+            <div class="field-title">
+              <span>位山示范基地 A 区</span>
+              <span class="fine">当前田块 Block 15</span>
+            </div>
+
+            <div class="field-tools" aria-label="地图工具">
+              <button class="tool-button">＋</button>
+              <button class="tool-button">−</button>
+              <button class="tool-button">◎</button>
+              <button class="tool-button">□</button>
+            </div>
+
+            <div class="field-board" aria-label="土壤水分立方图">
+              <div class="plots">
+                <div class="plot" style="--hue: 9; --light: 62%;"><span class="plot-label">01</span></div>
+                <div class="plot" style="--hue: 6; --light: 55%;"><span class="plot-label">02</span></div>
+                <div class="plot" style="--hue: 202; --light: 52%;"><span class="plot-label">04</span><span class="plot-note">46.8%</span></div>
+                <div class="plot" style="--hue: 212; --light: 49%;"><span class="plot-label">09</span><span class="plot-note">55.6%</span></div>
+                <div class="plot" style="--hue: 207; --light: 51%;"><span class="plot-label">08</span><span class="plot-note">52.0%</span></div>
+                <div class="plot" style="--hue: 205; --light: 52%;"><span class="plot-label">16</span></div>
+                <div class="plot" style="--hue: 8; --light: 56%;"><span class="plot-label">03</span></div>
+                <div class="plot" style="--hue: 10; --light: 54%;"><span class="plot-label">04</span></div>
+                <div class="plot" style="--hue: 190; --light: 56%;"><span class="plot-label">06</span></div>
+                <div class="plot" style="--hue: 204; --light: 50%;"><span class="plot-label">07</span><span class="plot-note">48.7%</span></div>
+                <div class="plot" style="--hue: 191; --light: 57%;"><span class="plot-label">15</span><span class="plot-note">32.4%</span></div>
+                <div class="plot" style="--hue: 5; --light: 47%;"><span class="plot-label">18</span><span class="plot-note">危险</span></div>
+                <div class="plot" style="--hue: 7; --light: 55%;"><span class="plot-label">05</span></div>
+                <div class="plot" style="--hue: 8; --light: 54%;"><span class="plot-label">12</span></div>
+                <div class="plot" style="--hue: 18; --light: 64%;"><span class="plot-label">10</span></div>
+                <div class="plot" style="--hue: 4; --light: 48%;"><span class="plot-label">11</span></div>
+                <div class="plot" style="--hue: 8; --light: 52%;"><span class="plot-label">13</span></div>
+                <div class="plot" style="--hue: 140; --light: 36%;"><span class="plot-label">17</span><span class="plot-note">94.0%</span></div>
+              </div>
+            </div>
+
+            <div class="focus-card" data-endpoint="GET /prediction/yield/page">
+              <h2>作物产量预报</h2>
+              <div class="yield-grid">
+                <div class="yield-metric">
+                  <strong>842</strong>
+                  <span>平均产量 kg/亩</span>
+                </div>
+                <div class="yield-metric">
+                  <strong>16,840</strong>
+                  <span>总预测产量 kg</span>
+                </div>
+              </div>
+              <div class="metric-row" style="margin-bottom: 0">
+                <span class="fine">TOP 3：Block 17 · Block 06 · Block 01</span>
+              </div>
+            </div>
+
+            <div class="module-bar" aria-label="底部功能导航">
+              <button class="selected">土壤水分</button>
+              <button>水分预测</button>
+              <button>缺水预警</button>
+              <button>灌溉决策</button>
+              <button>产量品质</button>
+            </div>
+          </div>
+
+          <footer class="bottom-status">
+            <div>
+              <div class="legend">
+                <span class="legend-label">土壤水分</span>
+                <div>
+                  <div class="scale" aria-hidden="true">
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                  </div>
+                  <div class="scale-caption">
+                    <span>危险</span>
+                    <span>偏干</span>
+                    <span>适宜</span>
+                    <span>偏湿</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="status-strip">
+              <span>系统状态 <strong>运行良好</strong></span>
+              <span>采集节点 <strong>16/18</strong></span>
+              <span>预警 <strong>3/4</strong></span>
+              <span>延迟 <strong>56ms</strong></span>
+            </div>
+          </footer>
+        </section>
+
+        <aside class="stack right-stack">
+          <section class="panel panel-pad" data-endpoint="POST /irrigation/prescription">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">AIOT 决策中枢</p>
+                <span class="panel-kicker">PRE20240101001</span>
+              </div>
+              <button class="ghost-pill">查看</button>
+            </div>
+            <article class="decision-card">
+              <strong>推荐灌溉方案</strong>
+              <div class="plan-grid">
+                <div class="plan-metric">
+                  <b>45mm</b>
+                  <span class="fine">总灌水量</span>
+                </div>
+                <div class="plan-metric">
+                  <b>90min</b>
+                  <span class="fine">预计时长</span>
+                </div>
+                <div class="plan-metric">
+                  <b>06:00</b>
+                  <span class="fine">计划时间</span>
+                </div>
+                <div class="plan-metric">
+                  <b>0.5</b>
+                  <span class="fine">模拟流速</span>
+                </div>
+              </div>
+              <div class="action-row">
+                <button class="ghost-pill">调整参数</button>
+                <button class="pill">保存方案</button>
+              </div>
+            </article>
+          </section>
+
+          <section class="panel panel-pad" data-endpoint="POST /irrigation/plans">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">灌溉方案状态</p>
+                <span class="panel-kicker">本轮只保存方案，不下发设备</span>
+              </div>
+            </div>
+            <div class="irrigation-body">
+              <div class="progress-ring">
+                <div class="progress-inner">
+                  <div>
+                    <strong>72%</strong>
+                    <span>方案完成度</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div class="control-list">
+                  <span>田块 <b>Block 15</b></span>
+                  <span>状态 <b>待确认</b></span>
+                  <span>剩余校验 <b>2 项</b></span>
+                </div>
+                <div class="icon-actions">
+                  <button class="circle-action">▶</button>
+                  <button class="circle-action">Ⅱ</button>
+                  <button class="circle-action">↻</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-pad">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">作物产量预报</p>
+                <span class="panel-kicker">区域统计 · 2024-06-01</span>
+              </div>
+              <button class="ghost-pill">导出</button>
+            </div>
+            <div class="metric-row">
+              <div class="metric">
+                <strong>88.2</strong>
+                <span>品质评分</span>
+              </div>
+              <div class="metric">
+                <strong>优</strong>
+                <span>品质等级</span>
+              </div>
+            </div>
+            <div class="prescription-grid" aria-label="处方图">
+              <i class="zone" style="--zone:#1f8f4d"></i>
+              <i class="zone" style="--zone:#299a59"></i>
+              <i class="zone" style="--zone:#5dbb79"></i>
+              <i class="zone" style="--zone:#c98b10"></i>
+              <i class="zone" style="--zone:#d65f1e"></i>
+              <i class="zone" style="--zone:#248f51"></i>
+              <i class="zone" style="--zone:#6ac985"></i>
+              <i class="zone" style="--zone:#f1c27d"></i>
+              <i class="zone" style="--zone:#f2d6a9"></i>
+              <i class="zone" style="--zone:#d72d28"></i>
+              <i class="zone" style="--zone:#1f8f4d"></i>
+              <i class="zone" style="--zone:#2c9d5b"></i>
+              <i class="zone" style="--zone:#b8dfc3"></i>
+              <i class="zone" style="--zone:#b8dfc3"></i>
+              <i class="zone" style="--zone:#e88b4d"></i>
+              <i class="zone" style="--zone:#1f8f4d"></i>
+              <i class="zone" style="--zone:#6ac985"></i>
+              <i class="zone" style="--zone:#d9f0dc"></i>
+              <i class="zone" style="--zone:#d9f0dc"></i>
+              <i class="zone" style="--zone:#b8dfc3"></i>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

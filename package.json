@@ -1,0 +1,20 @@
+{
+  "name": "agriculture-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @agriculture/web run dev",
+    "build:web": "npm --workspace @agriculture/web run build",
+    "test:web": "npm --workspace @agriculture/web run test",
+    "lint:web": "npm --workspace @agriculture/web run lint",
+    "dev:api": "cd apps/api && uv run uvicorn agriculture_api.main:app --reload --app-dir src",
+    "test:api": "cd apps/api && uv run pytest"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
