@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { alertItems, bottomModules, heatmapCells, trendPoints } from "./dashboardData";
 import type { BottomModule, RiskLevel } from "./dashboardData";
+import { sceneBlocks, sceneTools, type SceneBlock, type SceneToolId } from "./sceneData";
 
 type IconName =
   | BottomModule["icon"]
@@ -193,7 +194,7 @@ function DashboardHeader() {
   return (
     <header className="dashboard-header">
       <a className="brand-lockup" href="/" aria-label="四川大学">
-        <img src="/assets/sichuan-university-logo-red.jpg" alt="" />
+        <img src="/assets/sichuan-university-brand.png" alt="" />
         <span>
           <strong>四川大学</strong>
           <small>SICHUAN UNIVERSITY</small>
@@ -475,11 +476,131 @@ function SidePeek({
   );
 }
 
-function DigitalTwinScene({ onCollapse }: { onCollapse: () => void }) {
+function SceneToolButton({
+  isActive,
+  label,
+  toolId,
+  onSelect,
+}: {
+  isActive: boolean;
+  label: string;
+  toolId: SceneToolId;
+  onSelect: (toolId: SceneToolId) => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      className={`scene-floating-button ${isActive ? "scene-floating-button--active" : ""}`}
+      onClick={() => onSelect(toolId)}
+      type="button"
+    >
+      <Icon name={toolId} />
+    </button>
+  );
+}
+
+function SceneBlockHotspot({
+  block,
+  isSelected,
+  onSelect,
+}: {
+  block: SceneBlock;
+  isSelected: boolean;
+  onSelect: (blockId: string) => void;
+}) {
+  return (
+    <button
+      aria-label={`查看 ${block.label}`}
+      className={`scene-block-hotspot ${isSelected ? "scene-block-hotspot--selected" : ""}`}
+      onClick={() => onSelect(block.id)}
+      style={{ left: `${block.x}%`, top: `${block.y}%` }}
+      type="button"
+    >
+      <span className="scene-block-dot" aria-hidden="true" />
+      <span className="scene-block-tag">
+        <strong>{block.label}</strong>
+        <small>{block.id}</small>
+      </span>
+    </button>
+  );
+}
+
+function DigitalTwinScene({
+  activeTool,
+  onCollapse,
+  onExpand,
+  onSelectBlock,
+  onSelectTool,
+  selectedBlock,
+}: {
+  activeTool: SceneToolId;
+  onCollapse: () => void;
+  onExpand: () => void;
+  onSelectBlock: (blockId: string) => void;
+  onSelectTool: (toolId: SceneToolId) => void;
+  selectedBlock: SceneBlock;
+}) {
   return (
     <section className="twin-stage" aria-label="位山示范基地 A 区数字孪生地图">
       <button className="scene-click-target" onClick={onCollapse} type="button" aria-label="收起侧边面板" />
-      <img className="farm-scene" src="/assets/farm-twin-scene.png" alt="18 个田块的 3D 数字孪生地图" />
+      <div className="scene-shell">
+        <img className="farm-scene" src="/assets/farm-twin-scene.png" alt="18 个田块的 3D 数字孪生地图" />
+
+        <div className="scene-overlay">
+          <div className="scene-tool-column" aria-label="中间地图工具栏" role="toolbar">
+            {sceneTools.map((tool) => (
+              <SceneToolButton
+                isActive={activeTool === tool.id}
+                key={tool.id}
+                label={tool.label}
+                onSelect={(toolId) => {
+                  onSelectTool(toolId);
+                  onExpand();
+                }}
+                toolId={tool.id}
+              />
+            ))}
+          </div>
+
+          <div className="scene-shortcuts scene-shortcuts--left">
+            <button aria-label="查看现场快照" className="scene-floating-button scene-floating-button--small" type="button">
+              <Icon name="calendar" />
+            </button>
+            <button aria-label="查看地块编组" className="scene-floating-button scene-floating-button--small" type="button">
+              <Icon name="user" />
+            </button>
+          </div>
+
+          <div className="scene-shortcuts scene-shortcuts--right">
+            <button aria-label="查看防护概况" className="scene-floating-button scene-floating-button--small" type="button">
+              <Icon name="shield" />
+            </button>
+            <button aria-label="查看运维席位" className="scene-floating-button scene-floating-button--small" type="button">
+              <Icon name="user" />
+            </button>
+          </div>
+
+          <div className="scene-focus-card" aria-live="polite">
+            <span className="scene-focus-pill">当前焦点</span>
+            <strong>{selectedBlock.label}</strong>
+            <small>{selectedBlock.id} · 叠层热区已开启</small>
+          </div>
+
+          <div className="scene-block-layer" aria-label="18 个田块交互热区">
+            {sceneBlocks.map((block) => (
+              <SceneBlockHotspot
+                block={block}
+                isSelected={selectedBlock.id === block.id}
+                key={block.id}
+                onSelect={(blockId) => {
+                  onSelectBlock(blockId);
+                  onExpand();
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -503,6 +624,7 @@ function BottomNavigation() {
 }
 
 export function Dashboard() {
+  const [activeTool, setActiveTool] = useState<SceneToolId>("layers");
   const [panelsOpen, setPanelsOpen] = useState(() => {
     if (typeof window === "undefined") {
       return false;
@@ -510,16 +632,25 @@ export function Dashboard() {
 
     return new URLSearchParams(window.location.search).get("view") === "expanded";
   });
+  const [selectedBlockId, setSelectedBlockId] = useState("B15");
 
   const openPanels = () => setPanelsOpen(true);
   const collapsePanels = () => setPanelsOpen(false);
+  const selectedBlock = sceneBlocks.find((block) => block.id === selectedBlockId) ?? sceneBlocks[0];
 
   return (
     <main className={`irrigation-dashboard ${panelsOpen ? "is-expanded" : "is-collapsed"}`}>
       <DashboardHeader />
       <div className="dashboard-workspace">
         <LeftPanel />
-        <DigitalTwinScene onCollapse={collapsePanels} />
+        <DigitalTwinScene
+          activeTool={activeTool}
+          onCollapse={collapsePanels}
+          onExpand={openPanels}
+          onSelectBlock={setSelectedBlockId}
+          onSelectTool={setActiveTool}
+          selectedBlock={selectedBlock}
+        />
         <RightPanel />
         <SidePeek badge="3" icon="bell" label="查看报警详情" onOpen={openPanels} side="left" />
         <SidePeek icon="grid" label="查看功能面板" onOpen={openPanels} side="right" />
