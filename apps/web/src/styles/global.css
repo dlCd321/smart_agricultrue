@@ -372,16 +372,119 @@ a {
     filter 240ms ease;
 }
 
-.farm-scene {
-  display: block;
+.farm3d-map,
+.farm3d-webgl,
+.farm3d-label-host,
+.farm3d-canvas,
+.farm3d-label-layer {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+}
+
+.farm3d-map {
+  position: relative;
+  overflow: hidden;
+  border-radius: 44px;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(180deg, rgba(236, 247, 237, 0.94), rgba(241, 246, 248, 0.7));
   filter: saturate(1.03);
-  pointer-events: none;
-  user-select: none;
   -webkit-mask-image: radial-gradient(ellipse at center, #000 0 69%, rgba(0, 0, 0, 0.92) 83%, transparent 100%);
   mask-image: radial-gradient(ellipse at center, #000 0 69%, rgba(0, 0, 0, 0.92) 83%, transparent 100%);
+}
+
+.farm3d-map::before,
+.farm3d-map::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.farm3d-map::before {
+  background:
+    radial-gradient(circle at 50% 52%, rgba(111, 159, 118, 0.18), rgba(255, 255, 255, 0) 38%),
+    linear-gradient(120deg, rgba(103, 158, 93, 0.12), rgba(255, 255, 255, 0) 33%, rgba(97, 165, 196, 0.08) 68%, rgba(255, 255, 255, 0) 100%);
+}
+
+.farm3d-map::after {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 18%, rgba(255, 255, 255, 0) 82%, rgba(255, 255, 255, 0.5)),
+    radial-gradient(circle at 50% 78%, rgba(128, 175, 133, 0.14), rgba(255, 255, 255, 0) 32%);
+}
+
+.farm3d-webgl,
+.farm3d-label-host {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.farm3d-label-layer {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.farm3d-canvas {
+  display: block;
+  user-select: none;
+}
+
+.farm3d-label {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 68px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  border-radius: 16px;
+  color: #e5eef8;
+  background: rgba(14, 23, 42, 0.44);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(12px);
+  transform: translate(-50%, -50%);
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    color 180ms ease;
+}
+
+.farm3d-label strong {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.farm3d-label span {
+  color: rgba(226, 232, 240, 0.95);
+  font-size: 11px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.farm3d-label.is-highlighted {
+  background: rgba(11, 92, 47, 0.72);
+}
+
+.farm3d-label.is-hovered,
+.farm3d-label.is-selected {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 20px 36px rgba(24, 87, 146, 0.16);
+  transform: translate(-50%, calc(-50% - 4px));
+}
+
+.farm3d-label.is-hovered strong,
+.farm3d-label.is-selected strong,
+.farm3d-label.is-hovered span,
+.farm3d-label.is-selected span {
+  color: #0f172a;
 }
 
 .scene-overlay {
@@ -392,8 +495,7 @@ a {
 
 .scene-tool-column,
 .scene-shortcuts,
-.scene-focus-card,
-.scene-block-hotspot {
+.scene-focus-card {
   pointer-events: auto;
 }
 
@@ -448,8 +550,7 @@ a {
     inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }
 
-.scene-floating-button:focus-visible,
-.scene-block-hotspot:focus-visible {
+.scene-floating-button:focus-visible {
   outline: 2px solid rgba(34, 113, 255, 0.6);
   outline-offset: 2px;
 }
@@ -516,88 +617,6 @@ a {
   color: #5c6b85;
   font-size: 12px;
   line-height: 1.45;
-}
-
-.scene-block-layer {
-  position: absolute;
-  inset: 0;
-}
-
-.scene-block-hotspot {
-  position: absolute;
-  display: grid;
-  justify-items: center;
-  gap: 10px;
-  width: 78px;
-  padding: 0;
-  background: transparent;
-  transform: translate(-50%, -50%);
-}
-
-.scene-block-dot {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.92);
-  border-radius: 50%;
-  background: rgba(12, 103, 224, 0.9);
-  box-shadow:
-    0 0 0 8px rgba(255, 255, 255, 0.14),
-    0 10px 18px rgba(17, 24, 39, 0.2);
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    background 180ms ease;
-}
-
-.scene-block-tag {
-  display: grid;
-  justify-items: center;
-  min-width: 74px;
-  padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.68);
-  border-radius: 14px;
-  color: #f8fafc;
-  background: rgba(14, 23, 42, 0.56);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
-  backdrop-filter: blur(12px);
-  opacity: 0;
-  transform: translateY(6px);
-  transition:
-    opacity 180ms ease,
-    transform 180ms ease;
-}
-
-.scene-block-tag strong,
-.scene-block-tag small {
-  line-height: 1.2;
-}
-
-.scene-block-tag strong {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.scene-block-tag small {
-  margin-top: 2px;
-  color: rgba(226, 232, 240, 0.9);
-  font-size: 11px;
-}
-
-.scene-block-hotspot:hover .scene-block-dot,
-.scene-block-hotspot:focus-visible .scene-block-dot,
-.scene-block-hotspot--selected .scene-block-dot {
-  transform: scale(1.12);
-  box-shadow:
-    0 0 0 10px rgba(32, 162, 58, 0.18),
-    0 12px 24px rgba(37, 99, 235, 0.28);
-  background: rgba(32, 162, 58, 0.96);
-}
-
-.scene-block-hotspot:hover .scene-block-tag,
-.scene-block-hotspot:focus-visible .scene-block-tag,
-.scene-block-hotspot--selected .scene-block-tag {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .is-collapsed .scene-shell {
@@ -1668,8 +1687,17 @@ a {
     top: 12%;
   }
 
-  .scene-block-hotspot {
-    width: 70px;
+  .farm3d-label {
+    min-width: 62px;
+    padding: 5px 8px;
+  }
+
+  .farm3d-label strong {
+    font-size: 11px;
+  }
+
+  .farm3d-label span {
+    font-size: 10px;
   }
 
   .side-panel,
@@ -1782,27 +1810,18 @@ a {
     font-size: 18px;
   }
 
-  .scene-block-hotspot {
-    width: 58px;
-    gap: 8px;
+  .farm3d-label {
+    min-width: 54px;
+    gap: 3px;
+    padding: 5px 7px;
   }
 
-  .scene-block-dot {
-    width: 11px;
-    height: 11px;
-  }
-
-  .scene-block-tag {
-    min-width: 60px;
-    padding: 5px 8px;
-  }
-
-  .scene-block-tag strong {
-    font-size: 11px;
-  }
-
-  .scene-block-tag small {
+  .farm3d-label strong {
     font-size: 10px;
+  }
+
+  .farm3d-label span {
+    font-size: 9px;
   }
 
   .trend-footer {

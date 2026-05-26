@@ -2,7 +2,15 @@ import { useState } from "react";
 
 import { alertItems, bottomModules, heatmapCells, trendPoints } from "./dashboardData";
 import type { BottomModule, RiskLevel } from "./dashboardData";
-import { sceneBlocks, sceneTools, type SceneBlock, type SceneToolId } from "./sceneData";
+import { Farm3DMap } from "./Farm3DMap";
+import {
+  farmSceneBlocks,
+  getPrimaryRecommendedBlock,
+  getRecommendedBlockIds,
+  sceneTools,
+  type FarmBlockSceneDatum,
+  type SceneToolId,
+} from "./sceneData";
 
 type IconName =
   | BottomModule["icon"]
@@ -351,7 +359,16 @@ function LeftPanel() {
   );
 }
 
-function RecommendationCard() {
+function RecommendationCard({
+  recommendedBlock,
+  selectedBlock,
+}: {
+  recommendedBlock: FarmBlockSceneDatum;
+  selectedBlock: FarmBlockSceneDatum;
+}) {
+  const needsIrrigation = selectedBlock.moisture <= 35;
+  const guidance = needsIrrigation ? "土壤偏干，建议优先安排灌溉。" : "当前含水率处于可控区间，建议持续观察。";
+
   return (
     <article className="glass-card recommendation-card">
       <div className="card-title">
@@ -363,11 +380,11 @@ function RecommendationCard() {
           <Icon name="drop" />
         </span>
         <div>
-          <p>建议灌溉</p>
-          <strong>Block 15</strong>
-          <small>当前土壤含水率</small>
-          <b>18%</b>
-          <em>土壤硬旱，建议灌溉</em>
+          <p>优先建议 {recommendedBlock.blockId}</p>
+          <strong>{selectedBlock.blockId}</strong>
+          <small>{selectedBlock.blockName} 当前土壤含水率</small>
+          <b>{selectedBlock.moisture}%</b>
+          <em>{guidance}</em>
         </div>
       </div>
     </article>
@@ -432,10 +449,16 @@ function SimulationCard() {
   );
 }
 
-function RightPanel() {
+function RightPanel({
+  recommendedBlock,
+  selectedBlock,
+}: {
+  recommendedBlock: FarmBlockSceneDatum;
+  selectedBlock: FarmBlockSceneDatum;
+}) {
   return (
     <aside className="side-panel side-panel--right" aria-label="灌溉建议和功能面板">
-      <RecommendationCard />
+      <RecommendationCard recommendedBlock={recommendedBlock} selectedBlock={selectedBlock} />
       <YieldHeatmapCard />
       <SimulationCard />
     </aside>
@@ -499,52 +522,41 @@ function SceneToolButton({
   );
 }
 
-function SceneBlockHotspot({
-  block,
-  isSelected,
-  onSelect,
-}: {
-  block: SceneBlock;
-  isSelected: boolean;
-  onSelect: (blockId: string) => void;
-}) {
-  return (
-    <button
-      aria-label={`查看 ${block.label}`}
-      className={`scene-block-hotspot ${isSelected ? "scene-block-hotspot--selected" : ""}`}
-      onClick={() => onSelect(block.id)}
-      style={{ left: `${block.x}%`, top: `${block.y}%` }}
-      type="button"
-    >
-      <span className="scene-block-dot" aria-hidden="true" />
-      <span className="scene-block-tag">
-        <strong>{block.label}</strong>
-        <small>{block.id}</small>
-      </span>
-    </button>
-  );
-}
-
 function DigitalTwinScene({
   activeTool,
+  blocks,
+  highlightedBlockIds,
   onCollapse,
   onExpand,
   onSelectBlock,
   onSelectTool,
-  selectedBlock,
+  selectedBlockId,
 }: {
   activeTool: SceneToolId;
+  blocks: readonly FarmBlockSceneDatum[];
+  highlightedBlockIds: readonly string[];
   onCollapse: () => void;
   onExpand: () => void;
   onSelectBlock: (blockId: string) => void;
   onSelectTool: (toolId: SceneToolId) => void;
-  selectedBlock: SceneBlock;
+  selectedBlockId: string;
 }) {
+  const selectedBlock = blocks.find((block) => block.blockId === selectedBlockId) ?? blocks[0];
+
   return (
     <section className="twin-stage" aria-label="位山示范基地 A 区数字孪生地图">
       <button className="scene-click-target" onClick={onCollapse} type="button" aria-label="收起侧边面板" />
       <div className="scene-shell">
-        <img className="farm-scene" src="/assets/farm-twin-scene.png" alt="18 个田块的 3D 数字孪生地图" />
+        <Farm3DMap
+          activeTool={activeTool}
+          blocks={blocks}
+          highlightedBlockIds={highlightedBlockIds}
+          onSelectBlock={(blockId) => {
+            onSelectBlock(blockId);
+            onExpand();
+          }}
+          selectedBlockId={selectedBlockId}
+        />
 
         <div className="scene-overlay">
           <div className="scene-tool-column" aria-label="中间地图工具栏" role="toolbar">
@@ -582,22 +594,10 @@ function DigitalTwinScene({
 
           <div className="scene-focus-card" aria-live="polite">
             <span className="scene-focus-pill">当前焦点</span>
-            <strong>{selectedBlock.label}</strong>
-            <small>{selectedBlock.id} · 叠层热区已开启</small>
-          </div>
-
-          <div className="scene-block-layer" aria-label="18 个田块交互热区">
-            {sceneBlocks.map((block) => (
-              <SceneBlockHotspot
-                block={block}
-                isSelected={selectedBlock.id === block.id}
-                key={block.id}
-                onSelect={(blockId) => {
-                  onSelectBlock(blockId);
-                  onExpand();
-                }}
-              />
-            ))}
+            <strong>{selectedBlock.blockName}</strong>
+            <small>
+              {selectedBlock.blockId} · 含水率 {selectedBlock.moisture}% · 柱高值 {selectedBlock.heightValue}
+            </small>
           </div>
         </div>
       </div>
@@ -636,7 +636,9 @@ export function Dashboard() {
 
   const openPanels = () => setPanelsOpen(true);
   const collapsePanels = () => setPanelsOpen(false);
-  const selectedBlock = sceneBlocks.find((block) => block.id === selectedBlockId) ?? sceneBlocks[0];
+  const selectedBlock = farmSceneBlocks.find((block) => block.blockId === selectedBlockId) ?? farmSceneBlocks[0];
+  const recommendedBlock = getPrimaryRecommendedBlock(farmSceneBlocks);
+  const highlightedBlockIds = getRecommendedBlockIds(farmSceneBlocks);
 
   return (
     <main className={`irrigation-dashboard ${panelsOpen ? "is-expanded" : "is-collapsed"}`}>
@@ -645,13 +647,15 @@ export function Dashboard() {
         <LeftPanel />
         <DigitalTwinScene
           activeTool={activeTool}
+          blocks={farmSceneBlocks}
+          highlightedBlockIds={highlightedBlockIds}
           onCollapse={collapsePanels}
           onExpand={openPanels}
           onSelectBlock={setSelectedBlockId}
           onSelectTool={setActiveTool}
-          selectedBlock={selectedBlock}
+          selectedBlockId={selectedBlock.blockId}
         />
-        <RightPanel />
+        <RightPanel recommendedBlock={recommendedBlock} selectedBlock={selectedBlock} />
         <SidePeek badge="3" icon="bell" label="查看报警详情" onOpen={openPanels} side="left" />
         <SidePeek icon="grid" label="查看功能面板" onOpen={openPanels} side="right" />
       </div>
