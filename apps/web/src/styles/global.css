@@ -386,10 +386,11 @@ a {
   overflow: hidden;
   border-radius: 44px;
   isolation: isolate;
-  background:
-    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0) 42%),
-    linear-gradient(180deg, rgba(236, 247, 237, 0.94), rgba(241, 246, 248, 0.7));
-  filter: saturate(1.03);
+  background-image: url('/assets/farm-texture.png');
+  background-size: 92%;
+  background-repeat: no-repeat;
+  background-position: center 50%;
+  background-color: #f4f8f3;
   -webkit-mask-image: radial-gradient(ellipse at center, #000 0 69%, rgba(0, 0, 0, 0.92) 83%, transparent 100%);
   mask-image: radial-gradient(ellipse at center, #000 0 69%, rgba(0, 0, 0, 0.92) 83%, transparent 100%);
 }
@@ -399,21 +400,17 @@ a {
   position: absolute;
   inset: 0;
   content: "";
-  object-fit: cover;
   pointer-events: none;
   z-index: 0;
 }
 
 .farm3d-map::before {
-  background:
-    radial-gradient(circle at 50% 52%, rgba(111, 159, 118, 0.18), rgba(255, 255, 255, 0) 38%),
-    linear-gradient(120deg, rgba(103, 158, 93, 0.12), rgba(255, 255, 255, 0) 33%, rgba(97, 165, 196, 0.08) 68%, rgba(255, 255, 255, 0) 100%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 50%);
 }
 
 .farm3d-map::after {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 18%, rgba(255, 255, 255, 0) 82%, rgba(255, 255, 255, 0.5)),
-    radial-gradient(circle at 50% 78%, rgba(128, 175, 133, 0.14), rgba(255, 255, 255, 0) 32%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0) 78%, rgba(255, 255, 255, 0.28));
 }
 
 .farm3d-webgl,
