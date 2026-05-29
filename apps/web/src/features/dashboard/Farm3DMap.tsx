@@ -2,29 +2,46 @@ import { useEffect, useRef, type RefObject } from "react";
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import {
+  CSS2DObject,
+  CSS2DRenderer,
+} from "three/examples/jsm/renderers/CSS2DRenderer.js";
 
-import type { FarmBlockSceneDatum, FarmColorToken, SceneToolId } from "./sceneData";
+import type {
+  FarmBlockSceneDatum,
+  FarmColorToken,
+  SceneToolId,
+} from "./sceneData";
 
 const PLATFORM_TOP_Y = 0;
-const BLOCK_WIDTH = 2.7;
-const BLOCK_DEPTH = 1.68;
+
+const BLOCK_WIDTH = 2.9;
+const BLOCK_DEPTH = 2.35;
 const BLOCK_HEIGHT = 0.16;
-const BLOCK_SPACING_X = 2.6;
-const BLOCK_SPACING_Z = 3.4;
-const BLOCK_ROW_OFFSET_X = 0.25;
+
+const BLOCK_SPACING_X = 3.75;
+const BLOCK_SPACING_Z = 3.75;
+const BLOCK_ROW_OFFSET_X = 0.35;
+
 const GRID_CENTER_COL = 1.5;
 const GRID_CENTER_ROW = 1.5;
-const GRID_Z_OFFSET = -0.6;
+const GRID_Z_OFFSET = 0;
+
 const COLUMN_MIN_HEIGHT = 1.1;
 const COLUMN_HEIGHT_RANGE = 3.8;
+
+const COLUMN_MODEL_WIDTH = 1.55;
+const COLUMN_MODEL_DEPTH = 1.55;
+const COLUMN_HEIGHT_SCALE = 1.12;
+
+const GRID_OFFSET_X = -2.5;
+const GRID_OFFSET_Z = 2;
 
 const BLOCK_SURFACE_COLORS: Record<FarmColorToken, string> = {
   blue: "#8fd2ff",
   yellow: "#d8d18b",
   red: "#d7b08b",
 };
-const SINGLE_COLUMN_ID = "B09";
 
 type BlockVisuals = {
   block: FarmBlockSceneDatum;
@@ -53,20 +70,18 @@ type SceneContext = {
 function requestRender(contextRef: RefObject<SceneContext | null>) {
   const context = contextRef.current;
 
-  if (!context || context.frameId !== null) {
-    return;
-  }
+  if (!context || context.frameId !== null) return;
 
   context.frameId = window.requestAnimationFrame(() => {
     const latestContext = contextRef.current;
-
-    if (!latestContext) {
-      return;
-    }
+    if (!latestContext) return;
 
     latestContext.frameId = null;
     latestContext.renderer.render(latestContext.scene, latestContext.camera);
-    latestContext.labelRenderer.render(latestContext.scene, latestContext.camera);
+    latestContext.labelRenderer.render(
+      latestContext.scene,
+      latestContext.camera,
+    );
   });
 }
 
@@ -74,8 +89,10 @@ function getWorldPositionForBlock(block: FarmBlockSceneDatum) {
   const offsetX = (block.grid.row - GRID_CENTER_ROW) * BLOCK_ROW_OFFSET_X;
 
   return {
-    x: (block.grid.col - GRID_CENTER_COL) * BLOCK_SPACING_X + offsetX,
-    z: block.grid.row * BLOCK_SPACING_Z + GRID_Z_OFFSET,
+    x: (block.grid.col - GRID_CENTER_COL) * BLOCK_SPACING_X + offsetX + GRID_OFFSET_X,
+    z:
+      (block.grid.row - GRID_CENTER_ROW) * BLOCK_SPACING_Z +
+      GRID_Z_OFFSET + GRID_OFFSET_Z,
   };
 }
 
@@ -83,8 +100,11 @@ function createRoundedBox(width: number, height: number, depth: number) {
   return new THREE.BoxGeometry(width, height, depth, 5, 1, 5);
 }
 
-
-function setCameraFrustum(camera: THREE.OrthographicCamera, width: number, height: number) {
+function setCameraFrustum(
+  camera: THREE.OrthographicCamera,
+  width: number,
+  height: number,
+) {
   const aspect = width / Math.max(height, 1);
   const verticalSize = 11;
 
@@ -114,29 +134,41 @@ function buildLabel(block: FarmBlockSceneDatum) {
 
 function buildStaticScene(scene: THREE.Scene) {
   const ambientLight = new THREE.AmbientLight(0xffffff, 2.6);
+
   const sunLight = new THREE.DirectionalLight(0xffffff, 2.2);
   sunLight.position.set(10, 20, 8);
+
   const fillLight = new THREE.DirectionalLight(0xb8d4ff, 0.7);
   fillLight.position.set(-8, 8, -10);
+
   scene.add(ambientLight, sunLight, fillLight);
 }
 
-function fitModelToColumn(model: THREE.Object3D, targetWidth: number, targetHeight: number, targetDepth: number) {
+function fitModelToColumn(
+  model: THREE.Object3D,
+  targetWidth: number,
+  targetHeight: number,
+  targetDepth: number,
+) {
   const bounds = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
   bounds.getSize(size);
 
-  if (size.x <= 0 || size.y <= 0 || size.z <= 0) {
-    return;
-  }
+  if (size.x <= 0 || size.y <= 0 || size.z <= 0) return;
 
-  const uniformScale = Math.min(targetWidth / size.x, targetHeight / size.y, targetDepth / size.z);
+  const uniformScale = Math.min(
+    targetWidth / size.x,
+    targetHeight / size.y,
+    targetDepth / size.z,
+  );
+
   model.scale.setScalar(uniformScale);
   model.updateMatrixWorld(true);
 
   const scaledBounds = new THREE.Box3().setFromObject(model);
   const center = new THREE.Vector3();
   const scaledSize = new THREE.Vector3();
+
   scaledBounds.getCenter(center);
   scaledBounds.getSize(scaledSize);
 
@@ -161,17 +193,33 @@ function applyVisualState(
     const lift = isSelected ? 0.1 : isHovered ? 0.05 : 0;
 
     visuals.ground.position.y = PLATFORM_TOP_Y + BLOCK_HEIGHT / 2 + lift;
-    visuals.ground.material.color.set(isSelected ? "#d5f0df" : BLOCK_SURFACE_COLORS[visuals.block.colorToken]);
+    visuals.ground.material.color.set(
+      isSelected
+        ? "#d5f0df"
+        : BLOCK_SURFACE_COLORS[visuals.block.colorToken],
+    );
 
-    visuals.column.position.y = visuals.ground.position.y + BLOCK_HEIGHT / 2 + visuals.columnHeight / 2;
+    visuals.column.position.y =
+      visuals.ground.position.y +
+      BLOCK_HEIGHT / 2 +
+      visuals.columnHeight / 2;
+
     visuals.column.scale.x = isSelected ? 1.06 : isHovered ? 1.03 : 1;
     visuals.column.scale.z = visuals.column.scale.x;
 
     visuals.accent.visible = isHighlighted || isSelected;
     visuals.accent.position.y = visuals.ground.position.y + 0.01;
-    (visuals.accent.material as THREE.MeshBasicMaterial).opacity = isSelected ? 0.96 : 0.62;
-    visuals.hitArea.position.y = visuals.ground.position.y + BLOCK_HEIGHT / 2 + visuals.columnHeight / 2;
-    visuals.label.position.y = visuals.column.position.y + visuals.columnHeight / 2 + 0.52;
+    (visuals.accent.material as THREE.MeshBasicMaterial).opacity = isSelected
+      ? 0.96
+      : 0.62;
+
+    visuals.hitArea.position.y =
+      visuals.ground.position.y +
+      BLOCK_HEIGHT / 2 +
+      visuals.columnHeight / 2;
+
+    visuals.label.position.y =
+      visuals.column.position.y + visuals.columnHeight / 2 + 0.52;
 
     visuals.labelRoot.classList.toggle("is-selected", isSelected);
     visuals.labelRoot.classList.toggle("is-hovered", isHovered);
@@ -200,12 +248,16 @@ function getIntersectedBlockId(
 
   pointer.x = ((clientX - bounds.left) / bounds.width) * 2 - 1;
   pointer.y = -((clientY - bounds.top) / bounds.height) * 2 + 1;
+
   raycaster.setFromCamera(pointer, camera);
 
   const hit = raycaster
     .intersectObjects(selectables, false)
-    .find((item: THREE.Intersection<THREE.Object3D>) => item.object.userData.blockId);
-  return typeof hit?.object.userData.blockId === "string" ? hit.object.userData.blockId : null;
+    .find((item) => item.object.userData.blockId);
+
+  return typeof hit?.object.userData.blockId === "string"
+    ? hit.object.userData.blockId
+    : null;
 }
 
 export function Farm3DMap({
@@ -222,9 +274,11 @@ export function Farm3DMap({
   selectedBlockId: string;
 }) {
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
+  const labelHostRef = useRef<HTMLDivElement | null>(null);
+
   const contextRef = useRef<SceneContext | null>(null);
   const hoveredBlockIdRef = useRef<string | null>(null);
-  const labelHostRef = useRef<HTMLDivElement | null>(null);
+
   const activeToolRef = useRef(activeTool);
   const highlightedIdsRef = useRef(new Set(highlightedBlockIds));
   const selectedBlockIdRef = useRef(selectedBlockId);
@@ -233,14 +287,11 @@ export function Farm3DMap({
     const canvasHost = canvasHostRef.current;
     const labelHost = labelHostRef.current;
 
-    if (!canvasHost || !labelHost) {
-      return undefined;
-    }
+    if (!canvasHost || !labelHost) return undefined;
 
     const scene = new THREE.Scene();
 
     const camera = new THREE.OrthographicCamera();
-    // Keep the map in an isometric-like dashboard view aligned with the design mock.
     camera.position.set(8, 10, 12);
     camera.lookAt(0, 0, 4.3);
 
@@ -249,6 +300,7 @@ export function Farm3DMap({
       antialias: true,
       powerPreference: "high-performance",
     });
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.domElement.className = "farm3d-canvas";
@@ -263,10 +315,7 @@ export function Farm3DMap({
     const blockVisuals = new Map<string, BlockVisuals>();
     const selectables: THREE.Object3D[] = [];
 
-    const targetBlock = blocks.find((block) => block.blockId === SINGLE_COLUMN_ID) ?? blocks[0];
-
-    if (targetBlock) {
-      const block = targetBlock;
+    for (const block of blocks) {
       const world = getWorldPositionForBlock(block);
 
       const ground = new THREE.Mesh(
@@ -278,11 +327,23 @@ export function Farm3DMap({
           opacity: 0,
         }),
       );
-      ground.position.set(world.x, PLATFORM_TOP_Y + BLOCK_HEIGHT / 2, world.z);
 
-      const columnHeight = COLUMN_MIN_HEIGHT + (block.heightValue / 100) * COLUMN_HEIGHT_RANGE;
+      ground.position.set(
+        world.x,
+        PLATFORM_TOP_Y + BLOCK_HEIGHT / 2,
+        world.z,
+      );
+
+      const columnHeight =
+        COLUMN_MIN_HEIGHT + (block.heightValue / 100) * COLUMN_HEIGHT_RANGE;
+
       const column = new THREE.Group();
-      column.position.set(world.x, ground.position.y + BLOCK_HEIGHT / 2 + columnHeight / 2, world.z);
+
+      column.position.set(
+        world.x,
+        ground.position.y + BLOCK_HEIGHT / 2 + columnHeight / 2,
+        world.z,
+      );
 
       const accent = new THREE.Mesh(
         new THREE.TorusGeometry(0.98, 0.08, 12, 32),
@@ -292,27 +353,44 @@ export function Farm3DMap({
           opacity: 0.65,
         }),
       );
+
       accent.rotation.x = Math.PI / 2;
       accent.position.set(world.x, PLATFORM_TOP_Y + 0.1, world.z);
       accent.visible = false;
 
       const hitArea = new THREE.Mesh(
-        new THREE.BoxGeometry(BLOCK_WIDTH, columnHeight + 0.42, BLOCK_DEPTH),
+        new THREE.BoxGeometry(
+          Math.max(BLOCK_WIDTH, COLUMN_MODEL_WIDTH),
+          columnHeight + 0.8,
+          Math.max(BLOCK_DEPTH, COLUMN_MODEL_DEPTH),
+        ),
         new THREE.MeshBasicMaterial({
           transparent: true,
           opacity: 0,
           depthWrite: false,
         }),
       );
-      hitArea.position.set(world.x, ground.position.y + BLOCK_HEIGHT / 2 + columnHeight / 2, world.z);
+
+      hitArea.position.set(
+        world.x,
+        ground.position.y + BLOCK_HEIGHT / 2 + columnHeight / 2,
+        world.z,
+      );
+
       hitArea.userData.blockId = block.blockId;
 
       const { root, value } = buildLabel(block);
       const label = new CSS2DObject(root);
-      label.position.set(world.x, column.position.y + columnHeight / 2 + 0.52, world.z);
+
+      label.position.set(
+        world.x,
+        column.position.y + columnHeight / 2 + 0.52,
+        world.z,
+      );
 
       scene.add(ground, column, accent, hitArea, label);
       selectables.push(hitArea);
+
       blockVisuals.set(block.blockId, {
         accent,
         block,
@@ -326,6 +404,9 @@ export function Farm3DMap({
       });
     }
 
+    const pointer = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+
     const resize = () => {
       const width = canvasHost.clientWidth;
       const height = canvasHost.clientHeight;
@@ -336,43 +417,64 @@ export function Farm3DMap({
       requestRender(contextRef);
     };
 
-    const pointer = new THREE.Vector2();
-    const raycaster = new THREE.Raycaster();
-
     const onPointerMove = (event: PointerEvent) => {
-      const blockId = getIntersectedBlockId(camera, pointer, raycaster, selectables, event.clientX, event.clientY, canvasHost);
+      const blockId = getIntersectedBlockId(
+        camera,
+        pointer,
+        raycaster,
+        selectables,
+        event.clientX,
+        event.clientY,
+        canvasHost,
+      );
 
-      if (hoveredBlockIdRef.current === blockId) {
-        return;
-      }
+      if (hoveredBlockIdRef.current === blockId) return;
 
       hoveredBlockIdRef.current = blockId;
       canvasHost.style.cursor = blockId ? "pointer" : "default";
+
+      const context = contextRef.current;
+      if (!context) return;
+
       applyVisualState(
-        contextRef.current as SceneContext,
+        context,
         activeToolRef.current,
         highlightedIdsRef.current,
         hoveredBlockIdRef.current,
         selectedBlockIdRef.current,
       );
+
       requestRender(contextRef);
     };
 
     const onPointerLeave = () => {
       hoveredBlockIdRef.current = null;
       canvasHost.style.cursor = "default";
+
+      const context = contextRef.current;
+      if (!context) return;
+
       applyVisualState(
-        contextRef.current as SceneContext,
+        context,
         activeToolRef.current,
         highlightedIdsRef.current,
         hoveredBlockIdRef.current,
         selectedBlockIdRef.current,
       );
+
       requestRender(contextRef);
     };
 
     const onClick = (event: MouseEvent) => {
-      const blockId = getIntersectedBlockId(camera, pointer, raycaster, selectables, event.clientX, event.clientY, canvasHost);
+      const blockId = getIntersectedBlockId(
+        camera,
+        pointer,
+        raycaster,
+        selectables,
+        event.clientX,
+        event.clientY,
+        canvasHost,
+      );
 
       if (blockId) {
         onSelectBlock(blockId);
@@ -410,27 +512,36 @@ export function Farm3DMap({
 
     const readyContext = contextRef.current;
 
-    if (!readyContext) {
-      return undefined;
-    }
+    applyVisualState(
+      readyContext,
+      activeToolRef.current,
+      highlightedIdsRef.current,
+      null,
+      selectedBlockIdRef.current,
+    );
 
-    applyVisualState(readyContext, activeToolRef.current, highlightedIdsRef.current, null, selectedBlockIdRef.current);
     resize();
 
     const loader = new GLTFLoader();
+
     loader.load(
       "/assets/column-blue.glb",
       (gltf) => {
         const latestContext = contextRef.current;
-
-        if (!latestContext) {
-          return;
-        }
+        if (!latestContext) return;
 
         for (const visuals of latestContext.blockVisuals.values()) {
           visuals.column.clear();
+
           const model = gltf.scene.clone(true);
-          fitModelToColumn(model, 2.5, visuals.columnHeight * 1.55, 2.5);
+
+          fitModelToColumn(
+            model,
+            COLUMN_MODEL_WIDTH,
+            visuals.columnHeight * COLUMN_HEIGHT_SCALE,
+            COLUMN_MODEL_DEPTH,
+          );
+
           visuals.column.add(model);
         }
 
@@ -441,11 +552,12 @@ export function Farm3DMap({
           hoveredBlockIdRef.current,
           selectedBlockIdRef.current,
         );
+
         requestRender(contextRef);
       },
       undefined,
       () => {
-        // Keep the scene usable even if model loading fails.
+        requestRender(contextRef);
       },
     );
 
@@ -468,6 +580,7 @@ export function Farm3DMap({
 
       contextRef.current = null;
       hoveredBlockIdRef.current = null;
+
       renderer.dispose();
       labelRenderer.domElement.remove();
       renderer.domElement.remove();
@@ -482,16 +595,24 @@ export function Farm3DMap({
     highlightedIdsRef.current = new Set(highlightedBlockIds);
     selectedBlockIdRef.current = selectedBlockId;
 
-    if (!context) {
-      return;
-    }
+    if (!context) return;
 
-    applyVisualState(context, activeTool, highlightedIdsRef.current, hoveredBlockIdRef.current, selectedBlockId);
+    applyVisualState(
+      context,
+      activeTool,
+      highlightedIdsRef.current,
+      hoveredBlockIdRef.current,
+      selectedBlockId,
+    );
+
     requestRender(contextRef);
   }, [activeTool, highlightedBlockIds, selectedBlockId]);
 
   return (
-    <div className="farm3d-map" aria-label="单个田块柱体的 Three.js 数字孪生地图">
+    <div
+      className="farm3d-map"
+      aria-label="16 个田块柱体的 Three.js 数字孪生地图"
+    >
       <div className="farm3d-webgl" ref={canvasHostRef} />
       <div className="farm3d-label-host" ref={labelHostRef} />
     </div>
