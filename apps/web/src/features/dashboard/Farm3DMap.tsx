@@ -45,21 +45,27 @@ const BLOCK_SURFACE_COLORS: Record<FarmColorToken, string> = {
 };
 
 const COLUMN_FILL_COLORS: Record<FarmColorToken, string> = {
-  blue: "#1d9dff",
-  yellow: "#f3ce1b",
-  red: "#ff442e",
+  blue: "#0076d9",
+  yellow: "#d59a00",
+  red: "#d92c1f",
 };
 
 const COLUMN_EMISSIVE_COLORS: Record<FarmColorToken, string> = {
-  blue: "#57c4ff",
-  yellow: "#ffe766",
-  red: "#ff7a54",
+  blue: "#10a9ff",
+  yellow: "#ffc928",
+  red: "#ff5038",
 };
 
 const COLUMN_OUTLINE_COLORS: Record<FarmColorToken, string> = {
-  blue: "#e5f8ff",
-  yellow: "#fff7ba",
-  red: "#ffd9cc",
+  blue: "#aee6ff",
+  yellow: "#ffdf66",
+  red: "#ffad9f",
+};
+
+const COLUMN_RIM_COLORS: Record<FarmColorToken, string> = {
+  blue: "#004b94",
+  yellow: "#7a5400",
+  red: "#8b160f",
 };
 
 type BlockVisuals = {
@@ -208,6 +214,17 @@ function customizeColumnModel(
   model.traverse((child) => {
     if (!(child instanceof THREE.Mesh)) return;
 
+    const childName = child.name.toLowerCase();
+    if (
+      childName.includes("dashboard outline") ||
+      childName.includes("inner glow grid") ||
+      childName.includes("top sheen") ||
+      childName.includes("base contact")
+    ) {
+      child.visible = false;
+      return;
+    }
+
     const sourceMaterials = Array.isArray(child.material)
       ? child.material
       : [child.material];
@@ -221,11 +238,11 @@ function customizeColumnModel(
       ) {
         nextMaterial.color.copy(fillColor);
         nextMaterial.emissive.copy(emissiveColor);
-        nextMaterial.emissiveIntensity = 0.34;
-        nextMaterial.opacity = 0.9;
+        nextMaterial.emissiveIntensity = 0.22;
+        nextMaterial.opacity = 0.96;
         nextMaterial.transparent = true;
         nextMaterial.depthWrite = true;
-        nextMaterial.roughness = 0.12;
+        nextMaterial.roughness = 0.2;
       }
 
       if (nextMaterial instanceof THREE.MeshBasicMaterial) {
@@ -252,39 +269,87 @@ function buildColumnOverlay(
   const fillColor = COLUMN_FILL_COLORS[colorToken];
   const outlineColor = COLUMN_OUTLINE_COLORS[colorToken];
   const glowColor = COLUMN_EMISSIVE_COLORS[colorToken];
+  const rimColor = COLUMN_RIM_COLORS[colorToken];
 
   const shell = new THREE.Mesh(
     createRoundedBox(width * 0.92, height * 0.98, depth * 0.92),
     new THREE.MeshPhysicalMaterial({
       color: fillColor,
       emissive: glowColor,
-      emissiveIntensity: 0.18,
+      emissiveIntensity: 0.14,
       metalness: 0,
-      opacity: 0.82,
-      roughness: 0.18,
+      opacity: 0.9,
+      roughness: 0.22,
       transparent: true,
-      transmission: 0.08,
+      transmission: 0.02,
       depthWrite: true,
     }),
   );
   shell.renderOrder = 2;
 
-  const edgeGeometry = new THREE.EdgesGeometry(
-    new THREE.BoxGeometry(width * 1.03, height * 1.01, depth * 1.03),
+  const edgePoints = [
+    new THREE.Vector3(-width / 2, height / 2, -depth / 2),
+    new THREE.Vector3(width / 2, height / 2, -depth / 2),
+    new THREE.Vector3(width / 2, height / 2, -depth / 2),
+    new THREE.Vector3(width / 2, height / 2, depth / 2),
+    new THREE.Vector3(width / 2, height / 2, depth / 2),
+    new THREE.Vector3(-width / 2, height / 2, depth / 2),
+    new THREE.Vector3(-width / 2, height / 2, depth / 2),
+    new THREE.Vector3(-width / 2, height / 2, -depth / 2),
+    new THREE.Vector3(-width / 2, -height / 2, -depth / 2),
+    new THREE.Vector3(-width / 2, height / 2, -depth / 2),
+    new THREE.Vector3(width / 2, -height / 2, -depth / 2),
+    new THREE.Vector3(width / 2, height / 2, -depth / 2),
+    new THREE.Vector3(width / 2, -height / 2, depth / 2),
+    new THREE.Vector3(width / 2, height / 2, depth / 2),
+    new THREE.Vector3(-width / 2, -height / 2, depth / 2),
+    new THREE.Vector3(-width / 2, height / 2, depth / 2),
+  ];
+  const edges = new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(edgePoints),
+    new THREE.LineBasicMaterial({
+      color: rimColor,
+      transparent: true,
+      opacity: 0.52,
+      depthWrite: false,
+    }),
   );
-  const edgeMaterial = new THREE.LineBasicMaterial({
-    color: outlineColor,
-    transparent: true,
-    opacity: 0.84,
-    depthWrite: false,
-  });
-  const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
   edges.renderOrder = 4;
+
+  const highlightPoints = [
+    new THREE.Vector3(-width / 2 + 0.04, height / 2 + 0.006, -depth / 2),
+    new THREE.Vector3(width / 2 - 0.04, height / 2 + 0.006, -depth / 2),
+    new THREE.Vector3(-width / 2, -height / 2 + 0.08, -depth / 2 - 0.02),
+    new THREE.Vector3(-width / 2, height / 2 - 0.04, -depth / 2 - 0.02),
+  ];
+  const highlights = new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(highlightPoints),
+    new THREE.LineBasicMaterial({
+      color: outlineColor,
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false,
+    }),
+  );
+  highlights.renderOrder = 5;
+
+  const sideShade = new THREE.Mesh(
+    new THREE.PlaneGeometry(width * 0.92, height * 0.94),
+    new THREE.MeshBasicMaterial({
+      color: rimColor,
+      transparent: true,
+      opacity: 0.12,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  sideShade.position.z = depth / 2 + 0.006;
+  sideShade.renderOrder = 3;
 
   const faceLineMaterial = new THREE.LineBasicMaterial({
     color: outlineColor,
     transparent: true,
-    opacity: 0.36,
+    opacity: 0.16,
     depthWrite: false,
   });
   const faceLineGeometry = new THREE.BufferGeometry().setFromPoints([
@@ -305,7 +370,7 @@ function buildColumnOverlay(
     new THREE.MeshBasicMaterial({
       color: outlineColor,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.1,
       depthWrite: false,
       side: THREE.DoubleSide,
     }),
@@ -319,7 +384,7 @@ function buildColumnOverlay(
     new THREE.MeshBasicMaterial({
       color: glowColor,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.24,
       depthWrite: false,
     }),
   );
@@ -327,7 +392,7 @@ function buildColumnOverlay(
   baseGlow.position.y = -height / 2 + 0.045;
   baseGlow.renderOrder = 1;
 
-  overlay.add(baseGlow, shell, edges, faceLines, topSheen);
+  overlay.add(baseGlow, shell, sideShade, edges, faceLines, highlights, topSheen);
 
   return overlay;
 }
