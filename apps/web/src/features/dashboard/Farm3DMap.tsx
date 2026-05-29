@@ -147,7 +147,7 @@ function buildLabel(block: FarmBlockSceneDatum) {
   root.className = "farm3d-label";
 
   const title = document.createElement("strong");
-  title.textContent = block.blockId;
+  title.textContent = String(Number(block.blockId.replace("B", "")));
 
   const value = document.createElement("span");
   value.textContent = `${block.moisture}%`;
@@ -399,7 +399,7 @@ function buildColumnOverlay(
 
 function applyVisualState(
   context: SceneContext,
-  activeTool: SceneToolId,
+  _activeTool: SceneToolId,
   highlightedIds: ReadonlySet<string>,
   hoveredBlockId: string | null,
   selectedBlockId: string,
@@ -437,19 +437,16 @@ function applyVisualState(
       visuals.columnHeight / 2;
 
     visuals.label.position.y =
-      visuals.column.position.y + visuals.columnHeight / 2 + 0.52;
+      visuals.column.position.y + visuals.columnHeight * 0.22;
+    visuals.label.position.z = visuals.block.grid.row >= 2
+      ? visuals.column.position.z + 0.36
+      : visuals.column.position.z + 0.52;
 
     visuals.labelRoot.classList.toggle("is-selected", isSelected);
     visuals.labelRoot.classList.toggle("is-hovered", isHovered);
     visuals.labelRoot.classList.toggle("is-highlighted", isHighlighted);
 
-    if (activeTool === "chart") {
-      visuals.labelBody.textContent = `柱高 ${visuals.block.heightValue}`;
-    } else if (activeTool === "cube") {
-      visuals.labelBody.textContent = `${visuals.block.moisture}%`;
-    } else {
-      visuals.labelBody.textContent = visuals.block.blockName;
-    }
+    visuals.labelBody.textContent = `${visuals.block.moisture}%`;
   }
 }
 
@@ -510,7 +507,7 @@ export function Farm3DMap({
     const scene = new THREE.Scene();
 
     const camera = new THREE.OrthographicCamera();
-    camera.position.set(8, 10, 12);
+    camera.position.set(8, 7.8, 12);
     camera.lookAt(0, 0, 4.3);
 
     const renderer = new THREE.WebGLRenderer({
@@ -602,8 +599,8 @@ export function Farm3DMap({
 
       label.position.set(
         world.x,
-        column.position.y + columnHeight / 2 + 0.52,
-        world.z,
+        column.position.y + columnHeight * 0.22,
+        world.z + 0.52,
       );
 
       scene.add(ground, column, accent, hitArea, label);
