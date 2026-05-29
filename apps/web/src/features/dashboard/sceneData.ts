@@ -57,8 +57,9 @@ export function getColorToken(moisture: number, risk: FarmRiskLevel): FarmColorT
 }
 
 export function getHeightValue(moisture: number): number {
-  const dryness = 100 - moisture;
-  return Math.max(34, Math.min(100, Math.round(30 + dryness * 0.86)));
+  // Higher moisture → taller column; lower moisture → shorter column.
+  // Maps moisture [0, 100] linearly to heightValue [20, 100].
+  return Math.max(20, Math.min(100, Math.round(20 + moisture * 0.8)));
 }
 
 export const farmSceneBlocks: FarmBlockSceneDatum[] = BLOCK_MOISTURE.map((moisture, index) => {

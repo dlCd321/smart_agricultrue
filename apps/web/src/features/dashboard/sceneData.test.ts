@@ -28,8 +28,9 @@ describe("digital twin scene data", () => {
     expect(getColorToken(44, "medium")).toBe("yellow");
     expect(getColorToken(28, "high")).toBe("red");
 
-    expect(getHeightValue(72)).toBeLessThan(getHeightValue(24));
-    expect(farmSceneBlocks.every((block) => block.heightValue >= 34 && block.heightValue <= 100)).toBe(true);
+    // Higher moisture should produce a taller column (larger heightValue).
+    expect(getHeightValue(72)).toBeGreaterThan(getHeightValue(24));
+    expect(farmSceneBlocks.every((block) => block.heightValue >= 20 && block.heightValue <= 100)).toBe(true);
   });
 
   it("keeps irrigation recommendation ranking anchored on the driest high-risk blocks", () => {

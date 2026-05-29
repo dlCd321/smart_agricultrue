@@ -541,8 +541,6 @@ function DigitalTwinScene({
   onSelectTool: (toolId: SceneToolId) => void;
   selectedBlockId: string;
 }) {
-  const selectedBlock = blocks.find((block) => block.blockId === selectedBlockId) ?? blocks[0];
-
   return (
     <section className="twin-stage" aria-label="位山示范基地 A 区数字孪生地图">
       <button className="scene-click-target" onClick={onCollapse} type="button" aria-label="收起侧边面板" />
@@ -590,14 +588,6 @@ function DigitalTwinScene({
             <button aria-label="查看运维席位" className="scene-floating-button scene-floating-button--small" type="button">
               <Icon name="user" />
             </button>
-          </div>
-
-          <div className="scene-focus-card" aria-live="polite">
-            <span className="scene-focus-pill">当前焦点</span>
-            <strong>{selectedBlock.blockName}</strong>
-            <small>
-              {selectedBlock.blockId} · 含水率 {selectedBlock.moisture}% · 柱高值 {selectedBlock.heightValue}
-            </small>
           </div>
         </div>
       </div>
