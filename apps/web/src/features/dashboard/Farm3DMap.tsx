@@ -33,6 +33,7 @@ const COLUMN_HEIGHT_RANGE = 3.8;
 const COLUMN_MODEL_WIDTH = 1.55;
 const COLUMN_MODEL_DEPTH = 1.55;
 const COLUMN_HEIGHT_SCALE = 1.12;
+const COLUMN_MODEL_PATH = "/assets/column-outlined.glb";
 
 const GRID_OFFSET_X = -2.5;
 const GRID_OFFSET_Z = 2;
@@ -41,6 +42,24 @@ const BLOCK_SURFACE_COLORS: Record<FarmColorToken, string> = {
   blue: "#8fd2ff",
   yellow: "#d8d18b",
   red: "#d7b08b",
+};
+
+const COLUMN_FILL_COLORS: Record<FarmColorToken, string> = {
+  blue: "#1d9dff",
+  yellow: "#f3ce1b",
+  red: "#ff442e",
+};
+
+const COLUMN_EMISSIVE_COLORS: Record<FarmColorToken, string> = {
+  blue: "#57c4ff",
+  yellow: "#ffe766",
+  red: "#ff7a54",
+};
+
+const COLUMN_OUTLINE_COLORS: Record<FarmColorToken, string> = {
+  blue: "#e5f8ff",
+  yellow: "#fff7ba",
+  red: "#ffd9cc",
 };
 
 type BlockVisuals = {
@@ -156,13 +175,11 @@ function fitModelToColumn(
 
   if (size.x <= 0 || size.y <= 0 || size.z <= 0) return;
 
-  const uniformScale = Math.min(
+  model.scale.set(
     targetWidth / size.x,
     targetHeight / size.y,
     targetDepth / size.z,
   );
-
-  model.scale.setScalar(uniformScale);
   model.updateMatrixWorld(true);
 
   const scaledBounds = new THREE.Box3().setFromObject(model);
@@ -177,6 +194,142 @@ function fitModelToColumn(
     model.position.y - (scaledBounds.min.y + scaledSize.y / 2),
     model.position.z - center.z,
   );
+}
+
+function customizeColumnModel(
+  model: THREE.Object3D,
+  block: FarmBlockSceneDatum,
+) {
+  const fillColor = new THREE.Color(COLUMN_FILL_COLORS[block.colorToken]);
+  const emissiveColor = new THREE.Color(
+    COLUMN_EMISSIVE_COLORS[block.colorToken],
+  );
+
+  model.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+
+    const sourceMaterials = Array.isArray(child.material)
+      ? child.material
+      : [child.material];
+
+    child.material = sourceMaterials.map((material) => {
+      const nextMaterial = material.clone();
+
+      if (
+        nextMaterial instanceof THREE.MeshStandardMaterial ||
+        nextMaterial instanceof THREE.MeshPhysicalMaterial
+      ) {
+        nextMaterial.color.copy(fillColor);
+        nextMaterial.emissive.copy(emissiveColor);
+        nextMaterial.emissiveIntensity = 0.34;
+        nextMaterial.opacity = 0.9;
+        nextMaterial.transparent = true;
+        nextMaterial.depthWrite = true;
+        nextMaterial.roughness = 0.12;
+      }
+
+      if (nextMaterial instanceof THREE.MeshBasicMaterial) {
+        nextMaterial.color.copy(fillColor);
+        nextMaterial.opacity = 0.6;
+        nextMaterial.transparent = true;
+        nextMaterial.depthWrite = true;
+      }
+
+      return nextMaterial;
+    });
+
+    child.renderOrder = 2;
+  });
+}
+
+function buildColumnOverlay(
+  width: number,
+  height: number,
+  depth: number,
+  colorToken: FarmColorToken,
+) {
+  const overlay = new THREE.Group();
+  const fillColor = COLUMN_FILL_COLORS[colorToken];
+  const outlineColor = COLUMN_OUTLINE_COLORS[colorToken];
+  const glowColor = COLUMN_EMISSIVE_COLORS[colorToken];
+
+  const shell = new THREE.Mesh(
+    createRoundedBox(width * 0.92, height * 0.98, depth * 0.92),
+    new THREE.MeshPhysicalMaterial({
+      color: fillColor,
+      emissive: glowColor,
+      emissiveIntensity: 0.18,
+      metalness: 0,
+      opacity: 0.82,
+      roughness: 0.18,
+      transparent: true,
+      transmission: 0.08,
+      depthWrite: true,
+    }),
+  );
+  shell.renderOrder = 2;
+
+  const edgeGeometry = new THREE.EdgesGeometry(
+    new THREE.BoxGeometry(width * 1.03, height * 1.01, depth * 1.03),
+  );
+  const edgeMaterial = new THREE.LineBasicMaterial({
+    color: outlineColor,
+    transparent: true,
+    opacity: 0.84,
+    depthWrite: false,
+  });
+  const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+  edges.renderOrder = 4;
+
+  const faceLineMaterial = new THREE.LineBasicMaterial({
+    color: outlineColor,
+    transparent: true,
+    opacity: 0.36,
+    depthWrite: false,
+  });
+  const faceLineGeometry = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, -height / 2 + 0.08, -depth / 2 - 0.018),
+    new THREE.Vector3(0, height / 2 - 0.08, -depth / 2 - 0.018),
+    new THREE.Vector3(0, -height / 2 + 0.08, depth / 2 + 0.018),
+    new THREE.Vector3(0, height / 2 - 0.08, depth / 2 + 0.018),
+    new THREE.Vector3(-width / 2 - 0.018, -height / 2 + 0.08, 0),
+    new THREE.Vector3(-width / 2 - 0.018, height / 2 - 0.08, 0),
+    new THREE.Vector3(width / 2 + 0.018, -height / 2 + 0.08, 0),
+    new THREE.Vector3(width / 2 + 0.018, height / 2 - 0.08, 0),
+  ]);
+  const faceLines = new THREE.LineSegments(faceLineGeometry, faceLineMaterial);
+  faceLines.renderOrder = 5;
+
+  const topSheen = new THREE.Mesh(
+    new THREE.PlaneGeometry(width * 0.78, depth * 0.78),
+    new THREE.MeshBasicMaterial({
+      color: outlineColor,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  topSheen.rotation.x = -Math.PI / 2;
+  topSheen.position.y = height / 2 + 0.012;
+  topSheen.renderOrder = 3;
+
+  const baseGlow = new THREE.Mesh(
+    new THREE.TorusGeometry(Math.min(width, depth) * 0.48, 0.026, 8, 52),
+    new THREE.MeshBasicMaterial({
+      color: glowColor,
+      transparent: true,
+      opacity: 0.3,
+      depthWrite: false,
+    }),
+  );
+  baseGlow.rotation.x = Math.PI / 2;
+  baseGlow.position.y = -height / 2 + 0.045;
+  baseGlow.renderOrder = 1;
+
+  overlay.add(baseGlow, shell, edges, faceLines, topSheen);
+
+  return overlay;
 }
 
 function applyVisualState(
@@ -525,7 +678,7 @@ export function Farm3DMap({
     const loader = new GLTFLoader();
 
     loader.load(
-      "/assets/column-blue.glb",
+      COLUMN_MODEL_PATH,
       (gltf) => {
         const latestContext = contextRef.current;
         if (!latestContext) return;
@@ -534,15 +687,25 @@ export function Farm3DMap({
           visuals.column.clear();
 
           const model = gltf.scene.clone(true);
+          const targetHeight = visuals.columnHeight * COLUMN_HEIGHT_SCALE;
 
           fitModelToColumn(
             model,
             COLUMN_MODEL_WIDTH,
-            visuals.columnHeight * COLUMN_HEIGHT_SCALE,
+            targetHeight,
             COLUMN_MODEL_DEPTH,
           );
 
-          visuals.column.add(model);
+          customizeColumnModel(model, visuals.block);
+          visuals.column.add(
+            model,
+            buildColumnOverlay(
+              COLUMN_MODEL_WIDTH,
+              targetHeight,
+              COLUMN_MODEL_DEPTH,
+              visuals.block.colorToken,
+            ),
+          );
         }
 
         applyVisualState(
