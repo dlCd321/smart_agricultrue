@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -79,6 +79,12 @@ type BlockVisuals = {
   labelBody: HTMLSpanElement;
   labelRoot: HTMLDivElement;
 };
+
+type TooltipState = {
+  block: FarmBlockSceneDatum;
+  x: number;
+  y: number;
+} | null;
 
 type SceneContext = {
   blockVisuals: Map<string, BlockVisuals>;
@@ -238,11 +244,11 @@ function customizeColumnModel(
       ) {
         nextMaterial.color.copy(fillColor);
         nextMaterial.emissive.copy(emissiveColor);
-        nextMaterial.emissiveIntensity = 0.22;
-        nextMaterial.opacity = 0.96;
+        nextMaterial.emissiveIntensity = 0.07;
+        nextMaterial.opacity = 0.92;
         nextMaterial.transparent = true;
         nextMaterial.depthWrite = true;
-        nextMaterial.roughness = 0.2;
+        nextMaterial.roughness = 0.74;
       }
 
       if (nextMaterial instanceof THREE.MeshBasicMaterial) {
@@ -276,12 +282,12 @@ function buildColumnOverlay(
     new THREE.MeshPhysicalMaterial({
       color: fillColor,
       emissive: glowColor,
-      emissiveIntensity: 0.14,
+      emissiveIntensity: 0.05,
       metalness: 0,
-      opacity: 0.9,
-      roughness: 0.22,
+      opacity: 0.86,
+      roughness: 0.76,
       transparent: true,
-      transmission: 0.02,
+      transmission: 0,
       depthWrite: true,
     }),
   );
@@ -310,7 +316,7 @@ function buildColumnOverlay(
     new THREE.LineBasicMaterial({
       color: rimColor,
       transparent: true,
-      opacity: 0.52,
+      opacity: 0.38,
       depthWrite: false,
     }),
   );
@@ -325,9 +331,9 @@ function buildColumnOverlay(
   const highlights = new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(highlightPoints),
     new THREE.LineBasicMaterial({
-      color: outlineColor,
+      color: "#ffffff",
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.58,
       depthWrite: false,
     }),
   );
@@ -368,9 +374,9 @@ function buildColumnOverlay(
   const topSheen = new THREE.Mesh(
     new THREE.PlaneGeometry(width * 0.78, depth * 0.78),
     new THREE.MeshBasicMaterial({
-      color: outlineColor,
+      color: "#ffffff",
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.22,
       depthWrite: false,
       side: THREE.DoubleSide,
     }),
@@ -384,7 +390,7 @@ function buildColumnOverlay(
     new THREE.MeshBasicMaterial({
       color: glowColor,
       transparent: true,
-      opacity: 0.24,
+      opacity: 0.08,
       depthWrite: false,
     }),
   );
@@ -395,6 +401,22 @@ function buildColumnOverlay(
   overlay.add(baseGlow, shell, sideShade, edges, faceLines, highlights, topSheen);
 
   return overlay;
+}
+
+/** Traverse a column Group and set emissiveIntensity on all standard meshes. */
+function setColumnEmissive(column: THREE.Group, intensity: number) {
+  column.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+    const mats = Array.isArray(child.material) ? child.material : [child.material];
+    for (const mat of mats) {
+      if (
+        mat instanceof THREE.MeshStandardMaterial ||
+        mat instanceof THREE.MeshPhysicalMaterial
+      ) {
+        mat.emissiveIntensity = intensity;
+      }
+    }
+  });
 }
 
 function applyVisualState(
@@ -424,12 +446,19 @@ function applyVisualState(
 
     visuals.column.scale.x = isSelected ? 1.06 : isHovered ? 1.03 : 1;
     visuals.column.scale.z = visuals.column.scale.x;
+    // Brighten emissive on hover/select so the column visibly glows.
+    setColumnEmissive(
+      visuals.column,
+      isSelected ? 0.36 : isHovered ? 0.26 : 0.07,
+    );
 
-    visuals.accent.visible = isHighlighted || isSelected;
+    visuals.accent.visible = isHighlighted || isSelected || isHovered;
     visuals.accent.position.y = visuals.ground.position.y + 0.01;
     (visuals.accent.material as THREE.MeshBasicMaterial).opacity = isSelected
       ? 0.96
-      : 0.62;
+      : isHovered
+        ? 0.52
+        : 0.62;
 
     visuals.hitArea.position.y =
       visuals.ground.position.y +
@@ -475,6 +504,50 @@ function getIntersectedBlockId(
     : null;
 }
 
+const RISK_LABELS: Record<string, string> = {
+  low: "正常",
+  medium: "注意",
+  high: "危险",
+};
+
+const RISK_COLORS: Record<string, string> = {
+  low: "#34d399",
+  medium: "#fbbf24",
+  high: "#f87171",
+};
+
+function BlockTooltip({ tooltip }: { tooltip: TooltipState }) {
+  if (!tooltip) return null;
+  const { block, x, y } = tooltip;
+  const riskLabel = RISK_LABELS[block.risk] ?? block.risk;
+  const riskColor = RISK_COLORS[block.risk] ?? "#94a3b8";
+
+  return (
+    <div
+      className="farm3d-tooltip"
+      style={{ left: x, top: y }}
+      aria-hidden="true"
+    >
+      <div className="farm3d-tooltip__header">
+        <span className="farm3d-tooltip__id">{block.blockId}</span>
+        <span className="farm3d-tooltip__name">{block.blockName}</span>
+      </div>
+      <div className="farm3d-tooltip__rows">
+        <div className="farm3d-tooltip__row">
+          <span className="farm3d-tooltip__label">含水量</span>
+          <span className="farm3d-tooltip__value">{block.moisture}%</span>
+        </div>
+        <div className="farm3d-tooltip__row">
+          <span className="farm3d-tooltip__label">风险等级</span>
+          <span className="farm3d-tooltip__value" style={{ color: riskColor }}>
+            {riskLabel}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Farm3DMap({
   activeTool,
   blocks,
@@ -497,6 +570,9 @@ export function Farm3DMap({
   const activeToolRef = useRef(activeTool);
   const highlightedIdsRef = useRef(new Set(highlightedBlockIds));
   const selectedBlockIdRef = useRef(selectedBlockId);
+  const blocksMapRef = useRef<Map<string, FarmBlockSceneDatum>>(new Map());
+
+  const [tooltip, setTooltip] = useState<TooltipState>(null);
 
   useEffect(() => {
     const canvasHost = canvasHostRef.current;
@@ -529,6 +605,9 @@ export function Farm3DMap({
 
     const blockVisuals = new Map<string, BlockVisuals>();
     const selectables: THREE.Object3D[] = [];
+
+    // Build a quick lookup so pointer-move can find block data by id.
+    blocksMapRef.current = new Map(blocks.map((b) => [b.blockId, b]));
 
     for (const block of blocks) {
       const world = getWorldPositionForBlock(block);
@@ -643,6 +722,19 @@ export function Farm3DMap({
         canvasHost,
       );
 
+      // Update tooltip position every move when hovering a block.
+      if (blockId) {
+        const bounds = canvasHost.getBoundingClientRect();
+        const relX = event.clientX - bounds.left;
+        const relY = event.clientY - bounds.top;
+        const block = blocksMapRef.current.get(blockId);
+        if (block) {
+          setTooltip({ block, x: relX, y: relY });
+        }
+      } else {
+        setTooltip(null);
+      }
+
       if (hoveredBlockIdRef.current === blockId) return;
 
       hoveredBlockIdRef.current = blockId;
@@ -665,6 +757,7 @@ export function Farm3DMap({
     const onPointerLeave = () => {
       hoveredBlockIdRef.current = null;
       canvasHost.style.cursor = "default";
+      setTooltip(null);
 
       const context = contextRef.current;
       if (!context) return;
@@ -840,6 +933,7 @@ export function Farm3DMap({
     >
       <div className="farm3d-webgl" ref={canvasHostRef} />
       <div className="farm3d-label-host" ref={labelHostRef} />
+      <BlockTooltip tooltip={tooltip} />
     </div>
   );
 }

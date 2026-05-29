@@ -420,6 +420,10 @@ a {
   z-index: 1;
 }
 
+.farm3d-label-host {
+  pointer-events: none;
+}
+
 .farm3d-label-layer {
   position: relative;
   overflow: hidden;
@@ -474,10 +478,14 @@ a {
   filter: drop-shadow(0 2px 2px rgba(5, 18, 38, 0.5)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.58));
 }
 
-.farm3d-label.is-hovered,
+/* is-hovered: bright cyan-white glow; is-selected: green glow — visually distinct */
+.farm3d-label.is-hovered {
+  filter: drop-shadow(0 3px 3px rgba(5, 18, 38, 0.5)) drop-shadow(0 0 18px rgba(120, 220, 255, 0.9));
+  transform: translate(-50%, calc(-50% - 4px)) scale(1.12);
+}
+
 .farm3d-label.is-selected {
-  color: #0f172a;
-  filter: drop-shadow(0 3px 3px rgba(5, 18, 38, 0.5)) drop-shadow(0 0 16px rgba(255, 255, 255, 0.7));
+  filter: drop-shadow(0 3px 3px rgba(5, 18, 38, 0.5)) drop-shadow(0 0 16px rgba(80, 255, 160, 0.8));
   transform: translate(-50%, calc(-50% - 2px)) scale(1.08);
 }
 
@@ -486,6 +494,86 @@ a {
 .farm3d-label.is-hovered span,
 .farm3d-label.is-selected span {
   color: #ffffff;
+}
+
+/* ─── Block hover tooltip ──────────────────────────────────────────────────── */
+
+.farm3d-tooltip {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(16px, -50%);
+  min-width: 148px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.22) inset;
+  color: #1e2d3d;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  z-index: 999;
+  animation: tooltip-in 120ms ease both;
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translate(12px, calc(-50% + 4px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(16px, -50%);
+  }
+}
+
+.farm3d-tooltip__header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.farm3d-tooltip__id {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0060b8;
+}
+
+.farm3d-tooltip__name {
+  font-size: 11px;
+  color: rgba(30, 45, 61, 0.55);
+}
+
+.farm3d-tooltip__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.farm3d-tooltip__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.farm3d-tooltip__label {
+  font-size: 11px;
+  color: rgba(30, 45, 61, 0.5);
+  white-space: nowrap;
+}
+
+.farm3d-tooltip__value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e2d3d;
+  white-space: nowrap;
 }
 
 .scene-overlay {
