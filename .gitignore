@@ -26,3 +26,7 @@ docs/
 *.swp
 .idea/
 .vscode/
+.codex
+.codegraph
+.claude
+.pnpm-store/v11
