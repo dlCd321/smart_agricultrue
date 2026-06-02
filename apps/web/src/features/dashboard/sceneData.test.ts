@@ -26,7 +26,8 @@ describe("digital twin scene data", () => {
 
     expect(getColorToken(63, "low")).toBe("blue");
     expect(getColorToken(44, "medium")).toBe("yellow");
-    expect(getColorToken(28, "high")).toBe("red");
+    expect(getColorToken(28, "high")).toBe("orange");
+    expect(getColorToken(18, "severe")).toBe("red");
 
     // Higher moisture should produce a taller column (larger heightValue).
     expect(getHeightValue(72)).toBeGreaterThan(getHeightValue(24));

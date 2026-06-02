@@ -22,8 +22,8 @@ Read `docs/` when it exists locally, but do not assume it is committed. Durable 
 ## Product Rules
 
 - The main screen is the actual farm operation interface, not a marketing landing page.
-- The farm map has 18 fixed blocks: `B01` through `B18`.
-- All map-like API responses must return all 18 blocks unless the endpoint explicitly documents otherwise.
+- The farm map has 16 fixed blocks: `B01` through `B16`.
+- All map-like API responses must return all 16 blocks unless the endpoint explicitly documents otherwise.
 - `fieldId` is legacy compatibility only. New frontend and backend code should use `blockId`, `blockNo`, and `blockName`.
 - Map coordinates use `grid.row` and `grid.col`; the origin is the top-left of the logical map.
 - The frontend must not recalculate business values that the backend already returns. Use API-provided `displayValue`, `displayUnit`, `heightValue`, `colorToken`, and `colorHex` as the single source of truth.

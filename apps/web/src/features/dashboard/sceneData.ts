@@ -5,9 +5,19 @@ export type SceneTool = {
   label: string;
 };
 
-export type FarmRiskLevel = "low" | "medium" | "high";
+export type FarmRiskLevel = "low" | "medium" | "high" | "severe";
 
-export type FarmColorToken = "blue" | "yellow" | "red";
+export type FarmColorToken =
+  | "blue"
+  | "green"
+  | "yellow"
+  | "orange"
+  | "red"
+  | "danger"
+  | "muted"
+  | "cyan"
+  | "sky"
+  | "success";
 
 export type FarmBlockSceneDatum = {
   blockId: string;
@@ -18,8 +28,11 @@ export type FarmBlockSceneDatum = {
     col: number;
   };
   moisture: number;
+  displayValue?: number | string;
+  displayUnit?: string;
   risk: FarmRiskLevel;
   colorToken: FarmColorToken;
+  colorHex?: string;
   heightValue: number;
 };
 
@@ -33,6 +46,10 @@ export const sceneTools: SceneTool[] = [
 ];
 
 export function getRiskLevel(moisture: number): FarmRiskLevel {
+  if (moisture <= 20) {
+    return "severe";
+  }
+
   if (moisture <= 35) {
     return "high";
   }
@@ -45,8 +62,12 @@ export function getRiskLevel(moisture: number): FarmRiskLevel {
 }
 
 export function getColorToken(moisture: number, risk: FarmRiskLevel): FarmColorToken {
-  if (risk === "high") {
+  if (risk === "severe") {
     return "red";
+  }
+
+  if (risk === "high") {
+    return "orange";
   }
 
   if (risk === "medium") {
@@ -86,6 +107,7 @@ export function getRecommendedBlockIds(blocks: readonly FarmBlockSceneDatum[], l
     low: 0,
     medium: 1,
     high: 2,
+    severe: 3,
   };
 
   return [...blocks]

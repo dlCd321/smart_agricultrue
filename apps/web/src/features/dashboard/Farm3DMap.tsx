@@ -40,32 +40,67 @@ const GRID_OFFSET_Z = 2;
 
 const BLOCK_SURFACE_COLORS: Record<FarmColorToken, string> = {
   blue: "#8fd2ff",
+  green: "#9edc8c",
   yellow: "#d8d18b",
+  orange: "#d9a079",
   red: "#d7b08b",
+  danger: "#d7b08b",
+  muted: "#d8dee8",
+  cyan: "#8fd2ff",
+  sky: "#8fd2ff",
+  success: "#9edc8c",
 };
 
 const COLUMN_FILL_COLORS: Record<FarmColorToken, string> = {
   blue: "#0076d9",
+  green: "#009b4e",
   yellow: "#d59a00",
+  orange: "#e9691d",
   red: "#d92c1f",
+  danger: "#d92c1f",
+  muted: "#94a3b8",
+  cyan: "#0891b2",
+  sky: "#0284c7",
+  success: "#009b4e",
 };
 
 const COLUMN_EMISSIVE_COLORS: Record<FarmColorToken, string> = {
   blue: "#10a9ff",
+  green: "#23d36b",
   yellow: "#ffc928",
+  orange: "#ff8a2b",
   red: "#ff5038",
+  danger: "#ff5038",
+  muted: "#cbd5e1",
+  cyan: "#22d3ee",
+  sky: "#38bdf8",
+  success: "#23d36b",
 };
 
 const COLUMN_OUTLINE_COLORS: Record<FarmColorToken, string> = {
   blue: "#aee6ff",
+  green: "#a9f5c8",
   yellow: "#ffdf66",
+  orange: "#ffbf7a",
   red: "#ffad9f",
+  danger: "#ffad9f",
+  muted: "#e2e8f0",
+  cyan: "#a5f3fc",
+  sky: "#bae6fd",
+  success: "#a9f5c8",
 };
 
 const COLUMN_RIM_COLORS: Record<FarmColorToken, string> = {
   blue: "#004b94",
+  green: "#075f35",
   yellow: "#7a5400",
+  orange: "#8a340d",
   red: "#8b160f",
+  danger: "#8b160f",
+  muted: "#64748b",
+  cyan: "#155e75",
+  sky: "#075985",
+  success: "#075f35",
 };
 
 type BlockVisuals = {
@@ -89,6 +124,7 @@ type TooltipState = {
 type SceneContext = {
   blockVisuals: Map<string, BlockVisuals>;
   camera: THREE.OrthographicCamera;
+  columnModelTemplate: THREE.Object3D | null;
   frameId: number | null;
   labelRenderer: CSS2DRenderer;
   raycaster: THREE.Raycaster;
@@ -156,7 +192,7 @@ function buildLabel(block: FarmBlockSceneDatum) {
   title.textContent = String(Number(block.blockId.replace("B", "")));
 
   const value = document.createElement("span");
-  value.textContent = `${block.moisture}%`;
+  value.textContent = `${block.displayValue ?? block.moisture}${block.displayUnit ?? "%"}`;
 
   root.append(title, value);
 
@@ -403,6 +439,78 @@ function buildColumnOverlay(
   return overlay;
 }
 
+function getColumnHeight(block: FarmBlockSceneDatum) {
+  return COLUMN_MIN_HEIGHT + (block.heightValue / 100) * COLUMN_HEIGHT_RANGE;
+}
+
+function disposeMaterial(material: THREE.Material | THREE.Material[]) {
+  const materials = Array.isArray(material) ? material : [material];
+  for (const item of materials) {
+    item.dispose();
+  }
+}
+
+function clearColumn(column: THREE.Group) {
+  column.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+    disposeMaterial(child.material);
+  });
+  column.clear();
+}
+
+function renderColumnVisual(
+  visuals: BlockVisuals,
+  modelTemplate: THREE.Object3D | null,
+) {
+  clearColumn(visuals.column);
+
+  const targetHeight = visuals.columnHeight * COLUMN_HEIGHT_SCALE;
+
+  if (modelTemplate) {
+    const model = modelTemplate.clone(true);
+
+    fitModelToColumn(
+      model,
+      COLUMN_MODEL_WIDTH,
+      targetHeight,
+      COLUMN_MODEL_DEPTH,
+    );
+
+    customizeColumnModel(model, visuals.block);
+    visuals.column.add(model);
+  }
+
+  visuals.column.add(
+    buildColumnOverlay(
+      COLUMN_MODEL_WIDTH,
+      targetHeight,
+      COLUMN_MODEL_DEPTH,
+      visuals.block.colorToken,
+    ),
+  );
+}
+
+function syncBlockVisuals(
+  context: SceneContext,
+  blocks: readonly FarmBlockSceneDatum[],
+) {
+  for (const block of blocks) {
+    const visuals = context.blockVisuals.get(block.blockId);
+    if (!visuals) continue;
+
+    visuals.block = block;
+    visuals.columnHeight = getColumnHeight(block);
+    visuals.ground.material.color.set(BLOCK_SURFACE_COLORS[block.colorToken]);
+    visuals.hitArea.geometry.dispose();
+    visuals.hitArea.geometry = new THREE.BoxGeometry(
+      Math.max(BLOCK_WIDTH, COLUMN_MODEL_WIDTH),
+      visuals.columnHeight + 0.8,
+      Math.max(BLOCK_DEPTH, COLUMN_MODEL_DEPTH),
+    );
+    renderColumnVisual(visuals, context.columnModelTemplate);
+  }
+}
+
 /** Traverse a column Group and set emissiveIntensity on all standard meshes. */
 function setColumnEmissive(column: THREE.Group, intensity: number) {
   column.traverse((child) => {
@@ -475,7 +583,7 @@ function applyVisualState(
     visuals.labelRoot.classList.toggle("is-hovered", isHovered);
     visuals.labelRoot.classList.toggle("is-highlighted", isHighlighted);
 
-    visuals.labelBody.textContent = `${visuals.block.moisture}%`;
+    visuals.labelBody.textContent = `${visuals.block.displayValue ?? visuals.block.moisture}${visuals.block.displayUnit ?? "%"}`;
   }
 }
 
@@ -534,8 +642,8 @@ function BlockTooltip({ tooltip }: { tooltip: TooltipState }) {
       </div>
       <div className="farm3d-tooltip__rows">
         <div className="farm3d-tooltip__row">
-          <span className="farm3d-tooltip__label">含水量</span>
-          <span className="farm3d-tooltip__value">{block.moisture}%</span>
+          <span className="farm3d-tooltip__label">展示值</span>
+          <span className="farm3d-tooltip__value">{block.displayValue ?? block.moisture}{block.displayUnit ?? "%"}</span>
         </div>
         <div className="farm3d-tooltip__row">
           <span className="farm3d-tooltip__label">风险等级</span>
@@ -569,14 +677,21 @@ export function Farm3DMap({
 
   const activeToolRef = useRef(activeTool);
   const highlightedIdsRef = useRef(new Set(highlightedBlockIds));
+  const initialBlocksRef = useRef(blocks);
+  const onSelectBlockRef = useRef(onSelectBlock);
   const selectedBlockIdRef = useRef(selectedBlockId);
   const blocksMapRef = useRef<Map<string, FarmBlockSceneDatum>>(new Map());
 
   const [tooltip, setTooltip] = useState<TooltipState>(null);
 
   useEffect(() => {
+    onSelectBlockRef.current = onSelectBlock;
+  }, [onSelectBlock]);
+
+  useEffect(() => {
     const canvasHost = canvasHostRef.current;
     const labelHost = labelHostRef.current;
+    const initialBlocks = initialBlocksRef.current;
 
     if (!canvasHost || !labelHost) return undefined;
 
@@ -607,9 +722,9 @@ export function Farm3DMap({
     const selectables: THREE.Object3D[] = [];
 
     // Build a quick lookup so pointer-move can find block data by id.
-    blocksMapRef.current = new Map(blocks.map((b) => [b.blockId, b]));
+    blocksMapRef.current = new Map(initialBlocks.map((b) => [b.blockId, b]));
 
-    for (const block of blocks) {
+    for (const block of initialBlocks) {
       const world = getWorldPositionForBlock(block);
 
       const ground = new THREE.Mesh(
@@ -628,8 +743,7 @@ export function Farm3DMap({
         world.z,
       );
 
-      const columnHeight =
-        COLUMN_MIN_HEIGHT + (block.heightValue / 100) * COLUMN_HEIGHT_RANGE;
+      const columnHeight = getColumnHeight(block);
 
       const column = new THREE.Group();
 
@@ -685,7 +799,7 @@ export function Farm3DMap({
       scene.add(ground, column, accent, hitArea, label);
       selectables.push(hitArea);
 
-      blockVisuals.set(block.blockId, {
+      const visuals: BlockVisuals = {
         accent,
         block,
         column,
@@ -695,7 +809,10 @@ export function Farm3DMap({
         label,
         labelBody: value,
         labelRoot: root,
-      });
+      };
+
+      renderColumnVisual(visuals, null);
+      blockVisuals.set(block.blockId, visuals);
     }
 
     const pointer = new THREE.Vector2();
@@ -785,7 +902,7 @@ export function Farm3DMap({
       );
 
       if (blockId) {
-        onSelectBlock(blockId);
+        onSelectBlockRef.current(blockId);
       }
     };
 
@@ -809,6 +926,7 @@ export function Farm3DMap({
     contextRef.current = {
       blockVisuals,
       camera,
+      columnModelTemplate: null,
       frameId: null,
       labelRenderer,
       raycaster,
@@ -838,29 +956,10 @@ export function Farm3DMap({
         const latestContext = contextRef.current;
         if (!latestContext) return;
 
+        latestContext.columnModelTemplate = gltf.scene;
+
         for (const visuals of latestContext.blockVisuals.values()) {
-          visuals.column.clear();
-
-          const model = gltf.scene.clone(true);
-          const targetHeight = visuals.columnHeight * COLUMN_HEIGHT_SCALE;
-
-          fitModelToColumn(
-            model,
-            COLUMN_MODEL_WIDTH,
-            targetHeight,
-            COLUMN_MODEL_DEPTH,
-          );
-
-          customizeColumnModel(model, visuals.block);
-          visuals.column.add(
-            model,
-            buildColumnOverlay(
-              COLUMN_MODEL_WIDTH,
-              targetHeight,
-              COLUMN_MODEL_DEPTH,
-              visuals.block.colorToken,
-            ),
-          );
+          renderColumnVisual(visuals, latestContext.columnModelTemplate);
         }
 
         applyVisualState(
@@ -875,6 +974,16 @@ export function Farm3DMap({
       },
       undefined,
       () => {
+        const latestContext = contextRef.current;
+        if (latestContext) {
+          applyVisualState(
+            latestContext,
+            activeToolRef.current,
+            highlightedIdsRef.current,
+            hoveredBlockIdRef.current,
+            selectedBlockIdRef.current,
+          );
+        }
         requestRender(contextRef);
       },
     );
@@ -904,7 +1013,7 @@ export function Farm3DMap({
       renderer.domElement.remove();
       scene.clear();
     };
-  }, [blocks, onSelectBlock]);
+  }, []);
 
   useEffect(() => {
     const context = contextRef.current;
@@ -925,6 +1034,24 @@ export function Farm3DMap({
 
     requestRender(contextRef);
   }, [activeTool, highlightedBlockIds, selectedBlockId]);
+
+  useEffect(() => {
+    const context = contextRef.current;
+
+    blocksMapRef.current = new Map(blocks.map((b) => [b.blockId, b]));
+
+    if (!context) return;
+
+    syncBlockVisuals(context, blocks);
+    applyVisualState(
+      context,
+      activeToolRef.current,
+      highlightedIdsRef.current,
+      hoveredBlockIdRef.current,
+      selectedBlockIdRef.current,
+    );
+    requestRender(contextRef);
+  }, [blocks]);
 
   return (
     <div
