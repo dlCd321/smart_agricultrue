@@ -35,8 +35,8 @@ const COLUMN_MODEL_DEPTH = 1.55;
 const COLUMN_HEIGHT_SCALE = 1.12;
 const COLUMN_MODEL_PATH = "/assets/column-outlined.glb";
 
-const GRID_OFFSET_X = -2.5;
-const GRID_OFFSET_Z = 2;
+const GRID_OFFSET_X = 0;
+const GRID_OFFSET_Z = 4;
 
 const BLOCK_SURFACE_COLORS: Record<FarmColorToken, string> = {
   blue: "#8fd2ff",
@@ -173,7 +173,7 @@ function setCameraFrustum(
   height: number,
 ) {
   const aspect = width / Math.max(height, 1);
-  const verticalSize = 11;
+  const verticalSize = 8;
 
   camera.left = -verticalSize * aspect;
   camera.right = verticalSize * aspect;
@@ -698,7 +698,7 @@ export function Farm3DMap({
     const scene = new THREE.Scene();
 
     const camera = new THREE.OrthographicCamera();
-    camera.position.set(8, 7.8, 12);
+    camera.position.set(8, 6, 12);
     camera.lookAt(0, 0, 4.3);
 
     const renderer = new THREE.WebGLRenderer({

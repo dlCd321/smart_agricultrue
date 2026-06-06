@@ -346,9 +346,8 @@ a {
 
 .twin-stage {
   position: absolute;
-  inset: -8px 0 0;
-  display: grid;
-  place-items: center;
+  inset: -128px -18px -38px;
+  display: block;
 }
 
 .scene-click-target {
@@ -362,12 +361,16 @@ a {
 }
 
 .scene-shell {
-  position: relative;
-  z-index: 2;
-  width: min(70vw, 1040px);
-  aspect-ratio: 1040 / 760;
+  position: absolute;
+  top: 18%;
+  left: 10%;
+
+  width: 80%;
+
+    height: 80%;
+
+
   transition:
-    width 240ms ease,
     transform 240ms ease,
     filter 240ms ease;
 }
@@ -384,15 +387,14 @@ a {
 .farm3d-map {
   position: relative;
   overflow: hidden;
-  border-radius: 44px;
+  border-radius: 0;
   isolation: isolate;
-  background-image: url('/assets/farm-texture.png');
-  background-size: 92%;
+  background-image: url('/assets/farm-aerial-base.png');
+  background-size: cover;
   background-repeat: no-repeat;
-  background-position: center 50%;
-  background-color: #f4f8f3;
-  -webkit-mask-image: radial-gradient(ellipse at center, #000 0 69%, rgba(0, 0, 0, 0.92) 83%, transparent 100%);
-  mask-image: radial-gradient(ellipse at center, #000 0 69%, rgba(0, 0, 0, 0.92) 83%, transparent 100%);
+  background-position: center 54%;
+  background-color: #d9ecbb;
+  box-shadow: none;
 }
 
 .farm3d-map::before,
@@ -405,12 +407,15 @@ a {
 }
 
 .farm3d-map::before {
-  background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 50%);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 38%),
+    radial-gradient(ellipse at 50% 58%, rgba(255, 255, 255, 0) 0 62%, rgba(248, 252, 244, 0.24) 100%);
 }
 
 .farm3d-map::after {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0) 78%, rgba(255, 255, 255, 0.28));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 24%, rgba(255, 255, 255, 0) 78%, rgba(255, 255, 255, 0.1)),
+    linear-gradient(90deg, rgba(9, 46, 24, 0.1), rgba(9, 46, 24, 0) 16%, rgba(9, 46, 24, 0) 84%, rgba(9, 46, 24, 0.1));
 }
 
 .farm3d-webgl,
@@ -709,13 +714,11 @@ a {
 }
 
 .is-collapsed .scene-shell {
-  width: min(79vw, 1100px);
-  transform: translateY(-2px) scale(1.01);
+  transform: none;
 }
 
 .is-expanded .scene-shell {
-  width: min(66vw, 980px);
-  transform: translateY(-10px);
+  transform: none;
 }
 
 .side-panel {
@@ -2082,8 +2085,9 @@ a {
   .scene-shell,
   .is-collapsed .scene-shell,
   .is-expanded .scene-shell {
-    width: min(69vw, 920px);
-    transform: translateY(-18px) scale(0.98);
+    width: 100%;
+    height: 100%;
+    transform: none;
   }
 
   .scene-tool-column {
