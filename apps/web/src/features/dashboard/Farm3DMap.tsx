@@ -21,7 +21,7 @@ const BLOCK_HEIGHT = 0.16;
 
 const BLOCK_SPACING_X = 3.75;
 const BLOCK_SPACING_Z = 3.75;
-const BLOCK_ROW_OFFSET_X = 0.35;
+const BLOCK_ROW_OFFSET_X = 0.42;
 
 const GRID_CENTER_COL = 1.5;
 const GRID_CENTER_ROW = 1.5;
@@ -30,13 +30,13 @@ const GRID_Z_OFFSET = 0;
 const COLUMN_MIN_HEIGHT = 1.1;
 const COLUMN_HEIGHT_RANGE = 3.8;
 
-const COLUMN_MODEL_WIDTH = 1.55;
-const COLUMN_MODEL_DEPTH = 1.55;
-const COLUMN_HEIGHT_SCALE = 1.12;
+const COLUMN_MODEL_WIDTH = 1.26;
+const COLUMN_MODEL_DEPTH = 1.26;
+const COLUMN_HEIGHT_SCALE = 1.06;
 const COLUMN_MODEL_PATH = "/assets/column-outlined.glb";
 
 const GRID_OFFSET_X = 0;
-const GRID_OFFSET_Z = 4;
+const GRID_OFFSET_Z = 3.7;
 
 const BLOCK_SURFACE_COLORS: Record<FarmColorToken, string> = {
   blue: "#8fd2ff",
@@ -733,7 +733,7 @@ export function Farm3DMap({
           color: BLOCK_SURFACE_COLORS[block.colorToken],
           roughness: 0.9,
           transparent: true,
-          opacity: 0,
+          opacity: 0.28,
         }),
       );
 
