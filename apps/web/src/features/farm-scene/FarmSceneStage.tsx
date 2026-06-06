@@ -24,7 +24,10 @@ export function FarmSceneStage({
 }) {
   return (
     <section className="twin-stage" aria-label="位山示范基地 A 区数字孪生地图">
-      <button className="scene-click-target" onClick={onCollapse} type="button" aria-label="收起侧边面板" />
+      <button className="scene-collapse-handle" onClick={onCollapse} type="button" aria-label="收起侧边面板">
+        <Icon className="scene-collapse-handle__icon" name="chevron" />
+        <span className="scene-collapse-handle__text">收起面板</span>
+      </button>
       <div className="scene-shell">
         <FarmScene3D
           activeTool={activeTool}
