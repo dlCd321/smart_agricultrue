@@ -26,8 +26,16 @@ docs/
 *.swp
 .idea/
 .vscode/
+<<<<<<< HEAD
 .codex
 .codegraph
 .claude
 .pnpm-store/v11
 final.blend
+=======
+final.blend
+.claude
+.codex
+.pnpm-store
+.codegraph
+>>>>>>> b3e270f (push1)
