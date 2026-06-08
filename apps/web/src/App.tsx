@@ -39,12 +39,19 @@ function FeatureShell({
   const [dataSource, setDataSource] = useState<"api" | "fallback">("fallback");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTimelineId, setActiveTimelineId] = useState<string | undefined>(undefined);
+  const [selectedBlockId, setSelectedBlockId] = useState(
+    () => operationPageFallbacks[route].highlightedBlockIds[0] ?? "B15",
+  );
   const page = useMemo(
-    () => getOperationPage(route, data, { activeTimelineId, onTimelineSelect: setActiveTimelineId }),
-    [activeTimelineId, data, route],
+    () =>
+      getOperationPage(route, data, {
+        activeTimelineId,
+        onTimelineSelect: setActiveTimelineId,
+        selectedBlockId,
+      }),
+    [activeTimelineId, data, route, selectedBlockId],
   );
   const [activeTool, setActiveTool] = useState<SceneToolId>("layers");
-  const [selectedBlockId, setSelectedBlockId] = useState(page.highlightedBlockIds[0] ?? "B15");
   const [panelsOpen, setPanelsOpen] = useState(true);
 
   const selectedBlock =
@@ -70,6 +77,7 @@ function FeatureShell({
     setDataSource("fallback");
     setIsLoading(true);
     setActiveTimelineId(undefined);
+    setSelectedBlockId(operationPageFallbacks[route].highlightedBlockIds[0] ?? "B15");
 
     void loadOperationPage(route).then((result) => {
       if (cancelled) return;

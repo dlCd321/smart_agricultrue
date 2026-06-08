@@ -2,6 +2,10 @@ import type { ApiResponse } from "@agriculture/shared";
 
 import type { FarmBlockSceneDatum } from "../dashboard/sceneData";
 import {
+  getIrrigationColorToken,
+  getIrrigationHeightValue,
+  getIrrigationSeverityByWater,
+  getIrrigationWaterDemand,
   irrigationDecisionData,
   makeBlocks,
   moisturePredictionData,
@@ -294,7 +298,30 @@ function adaptIrrigationDecision(raw: unknown): IrrigationDecisionData {
 
   return {
     ...irrigationDecisionData,
-    blocks: adaptBlocks(asArray(data.zones), irrigationDecisionData.blocks),
+    blocks: makeBlocks(
+      Object.fromEntries(
+        irrigationDecisionData.blocks.map((fallbackBlock) => {
+          const rawBlock = asArray(data.zones).find((item) => readString(asRecord(item).blockId) === fallbackBlock.blockId);
+          const block = asRecord(rawBlock);
+          const moisture = readNumber(block.currentMoisture, fallbackBlock.moisture);
+          const rawWaterDemand = readNumber(block.recommendedWaterM3, getIrrigationWaterDemand(moisture));
+          const waterDemand = rawWaterDemand > 0 ? rawWaterDemand : getIrrigationWaterDemand(moisture);
+
+          return [
+            fallbackBlock.blockId,
+            {
+              colorHex: readString(block.colorHex, undefined),
+              colorToken: readString(block.colorToken, getIrrigationColorToken(waterDemand)),
+              displayUnit: "m³",
+              displayValue: waterDemand,
+              heightValue: readNumber(block.heightValue, getIrrigationHeightValue(waterDemand)),
+              moisture,
+              risk: readString(block.riskLevel, getIrrigationSeverityByWater(waterDemand)),
+            } satisfies SceneBlockOverride,
+          ];
+        }),
+      ),
+    ),
     highlightedBlockIds: readKnownBlockIds(asArray(summary.priorityBlocks)),
     params: [
       ["决策模型", readString(input.decisionModelName, irrigationDecisionData.params[0][1])],

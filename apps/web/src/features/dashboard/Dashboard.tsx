@@ -5,6 +5,7 @@ import { PageLayout } from "../layout/PageLayout";
 import type { AppRoute } from "../layout/routes";
 import { SidePanel } from "../layout/SidePanel";
 import { Icon, type IconName } from "../shared/Icon";
+import { IrrigationBlockCard } from "../ui/IrrigationBlockCard";
 import { ChartCard } from "../ui/ChartCard";
 import { StatusCard } from "../ui/StatusCard";
 import { alertItems, heatmapCells, trendPoints } from "./dashboardData";
@@ -144,24 +145,14 @@ function RecommendationCard({
   const guidance = needsIrrigation ? "土壤偏干，建议优先安排灌溉。" : "当前含水率处于可控区间，建议持续观察。";
 
   return (
-    <article className="glass-card recommendation-card">
-      <div className="card-title">
-        <Icon name="drop" />
-        <h2>建议灌溉地块</h2>
-      </div>
-      <div className="recommendation-body">
-        <span className="recommend-icon">
-          <Icon name="drop" />
-        </span>
-        <div>
-          <p>优先建议 {recommendedBlock.blockId}</p>
-          <strong>{selectedBlock.blockId}</strong>
-          <small>{selectedBlock.blockName} 当前土壤含水率</small>
-          <b>{selectedBlock.moisture}%</b>
-          <em>{guidance}</em>
-        </div>
-      </div>
-    </article>
+    <IrrigationBlockCard
+      block={selectedBlock}
+      guidance={guidance}
+      label={`${selectedBlock.blockName} 当前土壤含水率`}
+      lead={`优先建议 ${recommendedBlock.blockId}`}
+      metricLabel="当前土壤含水率"
+      title="建议灌溉地块"
+    />
   );
 }
 

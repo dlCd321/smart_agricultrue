@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { SidePanel } from "../layout/SidePanel";
 import { Icon, type IconName } from "../shared/Icon";
 import { ChartCard } from "../ui/ChartCard";
+import { IrrigationBlockCard } from "../ui/IrrigationBlockCard";
 import { StatusCard } from "../ui/StatusCard";
 import { Timeline, type TimelineNode } from "../ui/Timeline";
 import type { FarmBlockSceneDatum } from "../dashboard/sceneData";
@@ -34,6 +35,7 @@ export type OperationPageView = {
 type OperationPageOptions = {
   activeTimelineId?: string;
   onTimelineSelect?: (id: string) => void;
+  selectedBlockId?: string;
 };
 
 function FieldRows({ rows }: { rows: readonly (readonly [string, string])[] }) {
@@ -337,6 +339,18 @@ function IrrigationDecisionView(
   data: IrrigationDecisionData = irrigationDecisionData,
   options: OperationPageOptions = {},
 ): OperationPageView {
+  const selectedBlock =
+    data.blocks.find((block) => block.blockId === options.selectedBlockId) ??
+    data.blocks.find((block) => block.blockId === data.highlightedBlockIds[0]) ??
+    data.blocks[0];
+  const selectedWater = `${selectedBlock.displayValue ?? 0}${selectedBlock.displayUnit ?? "m³"}`;
+  const isPriorityBlock = selectedBlock.risk === "severe";
+  const guidance = isPriorityBlock
+    ? "该地块缺水最重，建议纳入本轮优先灌溉。"
+    : selectedBlock.risk === "medium"
+      ? "建议安排在本轮常规灌溉窗口内处理。"
+      : "当前为轻度缺水，建议结合天气与轮灌计划处理。";
+
   return {
     blocks: data.blocks,
     highlightedBlockIds: data.highlightedBlockIds,
@@ -368,6 +382,15 @@ function IrrigationDecisionView(
     ),
     rightPanel: (
       <SidePanel ariaLabel="推荐灌溉方案" side="right">
+        <IrrigationBlockCard
+          block={selectedBlock}
+          className="operation-card irrigation-detail-card"
+          guidance={guidance}
+          label={`${selectedBlock.blockName} 预计灌溉需水量`}
+          lead="点击地图地块后同步更新"
+          metricLabel="预计灌溉需水量"
+          title="地块灌溉详情"
+        />
         <StatusCard className="operation-card" icon="drop" title="推荐灌溉方案">
           <div className="plan-metric">
             <span>预计总灌水量</span>
@@ -379,6 +402,7 @@ function IrrigationDecisionView(
         <StatusCard className="operation-card" icon="calendar" title="方案状态">
           <p className="operation-note">本轮仅保存推荐方案，不下发真实设备指令。</p>
           <p className="operation-note">API 口径：POST /irrigation/plans</p>
+          <p className="operation-note">当前选中 {selectedBlock.blockId}，建议灌溉 {selectedWater}。</p>
         </StatusCard>
       </SidePanel>
     ),

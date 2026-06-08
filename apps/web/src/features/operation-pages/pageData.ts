@@ -84,6 +84,10 @@ export type IrrigationDecisionData = {
   workflow: PageTimelineNode[];
 };
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
 const colorMap: Record<string, FarmColorToken> = {
   blue: "blue",
   cyan: "cyan",
@@ -113,6 +117,28 @@ function normalizeHeight(value: number | undefined, fallback: number) {
   return value <= 1 ? Math.round(value * 100) : value;
 }
 
+export function getIrrigationWaterDemand(moisture: number) {
+  return clamp(Math.round(6 + Math.max(0, 60 - moisture) * 0.67), 6, 34);
+}
+
+export function getIrrigationSeverityByWater(waterDemand: number): FarmRiskLevel {
+  if (waterDemand >= 28) return "severe";
+  if (waterDemand >= 18) return "medium";
+  return "low";
+}
+
+export function getIrrigationColorToken(waterDemand: number): FarmColorToken {
+  const severity = getIrrigationSeverityByWater(waterDemand);
+
+  if (severity === "severe") return "red";
+  if (severity === "medium") return "yellow";
+  return "blue";
+}
+
+export function getIrrigationHeightValue(waterDemand: number) {
+  return clamp(Math.round(92 - waterDemand * 1.6), 34, 86);
+}
+
 export function makeBlocks(overrides: Record<string, SceneBlockOverride>): FarmBlockSceneDatum[] {
   return farmSceneBlocks.map((block) => {
     const override = overrides[block.blockId];
@@ -126,6 +152,27 @@ export function makeBlocks(overrides: Record<string, SceneBlockOverride>): FarmB
       risk: override.risk ? riskMap[override.risk] ?? block.risk : block.risk,
     };
   });
+}
+
+export function buildIrrigationDecisionBlocks() {
+  return makeBlocks(
+    Object.fromEntries(
+      farmSceneBlocks.map((block) => {
+        const waterDemand = getIrrigationWaterDemand(block.moisture);
+
+        return [
+          block.blockId,
+          {
+            colorToken: getIrrigationColorToken(waterDemand),
+            displayUnit: "m³",
+            displayValue: waterDemand,
+            heightValue: getIrrigationHeightValue(waterDemand),
+            risk: getIrrigationSeverityByWater(waterDemand),
+          } satisfies SceneBlockOverride,
+        ];
+      }),
+    ),
+  );
 }
 
 export const moisturePredictionData: WaterPredictionData = {
@@ -232,16 +279,8 @@ export const yieldPredictionData: YieldPredictionData = {
 export const irrigationDecisionData: IrrigationDecisionData = {
   title: "灌溉决策",
   icon: "drop",
-  blocks: makeBlocks({
-    B01: { colorToken: "blue", displayValue: 6, displayUnit: "m³", heightValue: 0.35, risk: "low" },
-    B10: { colorToken: "yellow", displayValue: 18, displayUnit: "m³", heightValue: 0.62, risk: "medium" },
-    B13: { colorToken: "orange", displayValue: 30, displayUnit: "m³", heightValue: 0.78, risk: "high" },
-    B15: { colorToken: "yellow", displayValue: 20, displayUnit: "m³", heightValue: 0.7, risk: "medium" },
-    B16: { colorToken: "red", displayValue: 34, displayUnit: "m³", heightValue: 0.9, risk: "severe" },
-    B11: { colorToken: "red", displayValue: 34, displayUnit: "m³", heightValue: 0.9, risk: "severe" },
-    B14: { colorToken: "red", displayValue: 22, displayUnit: "m³", heightValue: 0.76, risk: "severe" },
-  }),
-  highlightedBlockIds: ["B15", "B11", "B16", "B10", "B14"],
+  blocks: buildIrrigationDecisionBlocks(),
+  highlightedBlockIds: ["B15", "B11", "B13", "B08", "B14"],
   params: [
     ["决策模型", "缺水度优先"],
     ["目标含水率", "60%"],
@@ -249,13 +288,13 @@ export const irrigationDecisionData: IrrigationDecisionData = {
     ["约束条件", "避开强降雨"],
   ] as const,
   queue: [
-    ["Block 15", "30m³", "优先灌溉"],
-    ["Block 11", "34m³", "优先灌溉"],
-    ["Block 16", "26m³", "中等灌溉"],
-    ["Block 10", "18m³", "中等灌溉"],
+    ["Block 15", "34m³", "优先灌溉"],
+    ["Block 11", "30m³", "优先灌溉"],
+    ["Block 13", "27m³", "中等灌溉"],
+    ["Block 08", "25m³", "中等灌溉"],
   ],
   saving: ["预计节水 18%", "覆盖面积 12.4 亩", "处方图 PRE-0523"],
-  plan: { water: "230 m³", blocks: "B11 / B15 / B16", start: "今天 20:00", duration: "90 分钟", rate: "0.50 m³/min", saving: "18%" },
+  plan: { water: "230 m³", blocks: "B15 / B11 / B13", start: "今天 20:00", duration: "90 分钟", rate: "0.50 m³/min", saving: "18%" },
   workflow: [
     { id: "generate", label: "生成处方", value: "已完成", status: "completed" },
     { id: "confirm", label: "方案确认", value: "待操作", status: "running" },
